@@ -185,7 +185,7 @@ function Backup-ExistingConfig {
 function Install-ClaudeCLI {
     <#
     .SYNOPSIS
-        Install Claude Code CLI
+        Install Claude Code CLI using native installer (recommended)
     #>
     Write-ColorOutput "Checking for existing Claude CLI installation..." Yellow
 
@@ -196,18 +196,27 @@ function Install-ClaudeCLI {
         $Update = Read-Host "Update to latest version? (y/N)"
         if ($Update -eq 'y' -or $Update -eq 'Y') {
             Write-ColorOutput "Updating Claude CLI..." Yellow
-            npm update -g @anthropic-ai/claude-code
+            & claude update
         }
     }
     else {
-        Write-ColorOutput "Installing Claude CLI via npm..." Yellow
+        Write-ColorOutput "Installing Claude CLI via native installer (recommended)..." Yellow
+        Write-ColorOutput "Running: irm https://claude.ai/install.ps1 | iex" Cyan
 
-        if (-not (Test-Command "npm")) {
-            throw "npm is not installed. Please install Node.js from https://nodejs.org/"
+        try {
+            # Use the official native installer (npm installation is deprecated)
+            $installScript = Invoke-RestMethod -Uri "https://claude.ai/install.ps1"
+            Invoke-Command -ScriptBlock ([scriptblock]::Create($installScript))
+            Write-ColorOutput "Claude CLI installed successfully" Green
         }
-
-        npm install -g @anthropic-ai/claude-code
-        Write-ColorOutput "Claude CLI installed successfully" Green
+        catch {
+            Write-ColorOutput "Native installer failed, trying npm fallback (deprecated)..." Yellow
+            if (-not (Test-Command "npm")) {
+                throw "npm is not installed. Please install Node.js from https://nodejs.org/ or fix network issues"
+            }
+            npm install -g @anthropic-ai/claude-code
+            Write-ColorOutput "Claude CLI installed via npm (deprecated method)" Green
+        }
     }
 }
 
@@ -278,13 +287,19 @@ function Initialize-ClaudeConfig {
         }
     }
 
-    # Create settings.json with Agent-First configuration
+    # Create settings.json with GLM5 environment configuration
+    # GLM5 requires specific env variables as per https://aiengineerguide.com/blog/glm-5-in-claude-code/
     $SettingsConfig = @{
-        _comment = "Claude Code Configuration - Agent-First Workflow with GLM5"
+        _comment = "Claude Code Configuration - GLM5 via Zhipu AI proxy"
         _comment2 = "GLM5 API: https://api.z.ai/api/anthropic (Zhipu AI proxy)"
-        model = $Model
-        apiUrl = $ApiUrl
-        apiKey = $ApiKey
+        env = @{
+            ANTHROPIC_AUTH_TOKEN = $ApiKey
+            ANTHROPIC_BASE_URL = $ApiUrl
+            API_TIMEOUT_MS = "3000000"
+            ANTHROPIC_DEFAULT_HAIKU_MODEL = "glm-4.5-air"
+            ANTHROPIC_DEFAULT_SONNET_MODEL = "glm-5"
+            ANTHROPIC_DEFAULT_OPUS_MODEL = "glm-5"
+        }
         permissions = @{
             defaultMode = "allow"
             allowedTools = @(

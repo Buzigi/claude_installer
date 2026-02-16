@@ -1,6 +1,14 @@
 {
-  "model": "glm5",
-  "apiEndpoint": "https://api.anthropic.com/v1/messages",
+  "_comment": "GLM5 Configuration for Claude Code",
+  "_source": "https://aiengineerguide.com/blog/glm-5-in-claude-code/",
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "YOUR_GLM5_API_KEY_HERE",
+    "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+    "API_TIMEOUT_MS": "3000000",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.5-air",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5"
+  },
   "modelConfig": {
     "maxTokens": 8192,
     "temperature": 0.7,
@@ -29,6 +37,7 @@
     "enabledSkills": [
       "drawio",
       "git-workflow",
+      "github-actions",
       "testing",
       "documentation",
       "code-review",

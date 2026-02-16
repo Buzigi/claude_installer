@@ -111,13 +111,26 @@ install_claude_cli() {
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             print_info "Updating Claude CLI..."
-            npm update -g @anthropic-ai/claude-code
+            claude update
             print_success "Claude CLI updated"
         fi
     else
-        print_info "Installing Claude CLI via npm..."
-        npm install -g @anthropic-ai/claude-code
-        print_success "Claude CLI installed"
+        print_info "Installing Claude CLI via native installer (recommended)..."
+        print_info "Running: curl -fsSL https://claude.ai/install.sh | bash"
+
+        # Use the official native installer (npm installation is deprecated)
+        if curl -fsSL https://claude.ai/install.sh | bash; then
+            print_success "Claude CLI installed via native installer"
+        else
+            print_warning "Native installer failed, trying npm fallback (deprecated)..."
+            if check_command npm; then
+                npm install -g @anthropic-ai/claude-code
+                print_success "Claude CLI installed via npm (deprecated method)"
+            else
+                print_error "npm not found. Please install Node.js or fix network issues"
+                exit 1
+            fi
+        fi
     fi
 }
 
@@ -222,14 +235,20 @@ create_config() {
     mkdir -p "$CONFIG_DIR/backups"
     mkdir -p "$CONFIG_DIR/logs"
 
-    # Create settings.json with Agent-First configuration
+    # Create settings.json with GLM5 environment configuration
+    # GLM5 requires specific env variables as per https://aiengineerguide.com/blog/glm-5-in-claude-code/
     cat > "$CONFIG_DIR/settings.json" << EOF
 {
-  "_comment": "Claude Code Configuration - Agent-First Workflow with GLM5",
+  "_comment": "Claude Code Configuration - GLM5 via Zhipu AI proxy",
   "_comment2": "GLM5 API: https://api.z.ai/api/anthropic (Zhipu AI proxy)",
-  "model": "$MODEL",
-  "apiUrl": "$API_URL_STORE",
-  "apiKey": "$API_KEY_STORE",
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "$API_KEY_STORE",
+    "ANTHROPIC_BASE_URL": "$API_URL_STORE",
+    "API_TIMEOUT_MS": "3000000",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.5-air",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5"
+  },
   "permissions": {
     "defaultMode": "allow",
     "allowedTools": [

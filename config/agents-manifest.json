@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "lastUpdated": "2025-02-16",
+  "version": "1.1.0",
+  "lastUpdated": "2026-02-16",
   "totalAgents": 44,
   "categories": {
     "engineering": {
@@ -174,7 +174,7 @@
         {
           "name": "git-github-specialist",
           "file": "git-github-specialist.md",
-          "description": "Git and GitHub workflow specialist",
+          "description": "Git and GitHub operations, CI/CD workflows, and version control specialist",
           "enabled": true
         }
       ]

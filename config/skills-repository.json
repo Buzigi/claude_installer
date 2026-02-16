@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "lastUpdated": "2025-02-16",
+  "version": "1.1.0",
+  "lastUpdated": "2026-02-16",
   "skills": [
     {
       "name": "drawio",
@@ -30,6 +30,20 @@
       "enabled": true,
       "dependencies": [],
       "tags": ["git", "version-control", "workflow"]
+    },
+    {
+      "name": "github-actions",
+      "description": "Create and manage GitHub Actions workflows, CI/CD pipelines, and GitHub automation",
+      "version": "1.0.0",
+      "source": "builtin",
+      "path": "skills/github-actions",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md"
+      ],
+      "enabled": true,
+      "dependencies": ["git-workflow"],
+      "tags": ["github", "ci-cd", "automation", "devops", "workflows"]
     },
     {
       "name": "testing",
@@ -147,6 +161,7 @@
   "categories": {
     "development": [
       "git-workflow",
+      "github-actions",
       "testing",
       "code-review",
       "refactoring"
@@ -162,6 +177,10 @@
     ],
     "frontend": [
       "frontend"
+    ],
+    "devops": [
+      "github-actions",
+      "git-workflow"
     ]
   }
 }

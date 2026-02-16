@@ -6,8 +6,8 @@ This installer automates the complete setup of Claude Code CLI with GLM5 model c
 
 ## Features
 
-- Automated Claude Code CLI installation
-- GLM5 model configuration
+- **Native Claude Code CLI installation** (recommended method, not deprecated npm)
+- **GLM5 model configuration** with proper env block format
 - **Agent-First workflow** - Always uses specialized sub-agents for every task
 - **Full permissions** - Can execute any operation except delete without confirmation
 - **Delete protection** - Destructive operations require explicit confirmation
@@ -16,14 +16,14 @@ This installer automates the complete setup of Claude Code CLI with GLM5 model c
 - MCP server configuration
 - Self-referential setup (can create its own skills)
 - PowerShell-based automation for Windows
+- Bash script for Linux/macOS
 
 ## System Requirements
 
-- Windows 10/11
-- PowerShell 5.1 or higher
-- Node.js 18+ (for MCP servers)
+- **Windows 10/11** or **Linux** (Ubuntu 20.04+, Debian 10+) or **macOS 13.0+**
+- PowerShell 5.1+ (Windows) or Bash/Zsh (Linux/macOS)
 - Internet connection
-- Administrative privileges (recommended)
+- Administrative privileges (recommended for Windows)
 
 ## Installation
 
@@ -108,24 +108,30 @@ GLM5 is accessed through a Zhipu AI proxy that provides an Anthropic-compatible 
 Claude Code → https://api.z.ai/api/anthropic → GLM5 Model
 ```
 
-**Configuration:**
+**Configuration (settings.json):**
 ```json
 {
-  "model": "glm5",
-  "apiUrl": "https://api.z.ai/api/anthropic",
-  "apiKey": "your_api_key_here",
-  "maxTokens": 8192,
-  "temperature": 0.7
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "your_api_key_here",
+    "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+    "API_TIMEOUT_MS": "3000000",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.5-air",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5"
+  }
 }
 ```
 
-**Environment Variables:**
+**Key Environment Variables:**
 - `ANTHROPIC_BASE_URL` = `https://api.z.ai/api/anthropic`
-- `ANTHROPIC_AUTH_TOKEN` = Your GLM5 API key
+- `ANTHROPIC_AUTH_TOKEN` = Your GLM5 API key (format: `id.secret`)
+- `ANTHROPIC_DEFAULT_SONNET_MODEL` = `glm-5`
 
 The installer will prompt for your API key during installation and configure everything automatically.
 
 For detailed GLM5 setup instructions, see [docs/GLM5-SETUP.md](docs/GLM5-SETUP.md)
+
+**Reference:** [GLM-5 in Claude Code Guide](https://aiengineerguide.com/blog/glm-5-in-claude-code/)
 
 ### Agent-First Workflow Configuration
 
@@ -239,11 +245,11 @@ Run the verification script to ensure everything is installed correctly:
 ### First Run
 
 ```bash
-# Start a new Claude Code session
+# Start a new Claude Code session (GLM5 is default)
 claude
 
-# Verify model
-claude --model glm5
+# Test a simple request
+claude "Hello, can you confirm you're running?"
 
 # Test a skill
 claude --skill drawio
@@ -316,7 +322,8 @@ For issues and support:
 - v1.0.0 - Initial release with GLM5 support
 - v1.1.0 - Added self-referential capabilities
 - v1.2.0 - Enhanced MCP server integration
-- **v2.0.0 - Agent-First workflow with full permissions and delete protection**
+- v2.0.0 - Agent-First workflow with full permissions and delete protection
+- **v2.1.0 - Fixed GLM5 configuration format (env block), native installer (no deprecated npm)**
 
 ## Agent-First Workflow
 
