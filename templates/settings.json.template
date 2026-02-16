@@ -1,7 +1,10 @@
 {
-  "_comment": "Claude Code Configuration Template - Auto-Agent Mode",
+  "_comment": "Claude Code Configuration Template - Auto-Agent Mode with GLM5",
   "_instructions": "Copy this file to ~/.claude/settings.json and customize as needed",
+  "_comment2": "GLM5 is accessed via https://api.z.ai/api/anthropic (Zhipu AI proxy)",
   "model": "glm5",
+  "apiUrl": "https://api.z.ai/api/anthropic",
+  "apiKey": "YOUR_GLM5_API_KEY_HERE",
   "permissions": {
     "defaultMode": "allow",
     "allowedTools": [

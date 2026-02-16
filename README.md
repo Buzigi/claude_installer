@@ -72,16 +72,34 @@ claude-installer/
 
 ### Model Configuration
 
-The installer configures Claude Code to use GLM5 model by default:
+The installer configures Claude Code to use GLM5 model by default.
 
+**How GLM5 Works:**
+
+GLM5 is accessed through a Zhipu AI proxy that provides an Anthropic-compatible API:
+
+```
+Claude Code → https://api.z.ai/api/anthropic → GLM5 Model
+```
+
+**Configuration:**
 ```json
 {
   "model": "glm5",
-  "apiEndpoint": "https://api.anthropic.com/v1/messages",
+  "apiUrl": "https://api.z.ai/api/anthropic",
+  "apiKey": "your_api_key_here",
   "maxTokens": 8192,
   "temperature": 0.7
 }
 ```
+
+**Environment Variables:**
+- `ANTHROPIC_BASE_URL` = `https://api.z.ai/api/anthropic`
+- `ANTHROPIC_AUTH_TOKEN` = Your GLM5 API key
+
+The installer will prompt for your API key during installation and configure everything automatically.
+
+For detailed GLM5 setup instructions, see [docs/GLM5-SETUP.md](docs/GLM5-SETUP.md)
 
 ### Agent-First Workflow Configuration
 

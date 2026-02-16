@@ -214,7 +214,7 @@ function Install-ClaudeCLI {
 function Initialize-ClaudeConfig {
     <#
     .SYNOPSIS
-        Initialize Claude Code configuration with Agent-First workflow
+        Initialize Claude Code configuration with Agent-First workflow and GLM5
     #>
     $ConfigDir = "$env:USERPROFILE\.claude"
     $ConfigFile = "$ConfigDir\settings.json"
@@ -226,10 +226,57 @@ function Initialize-ClaudeConfig {
     Backup-ExistingConfig $ConfigFile
     Backup-ExistingConfig $LocalConfigFile
 
+    # Prompt for GLM5 API key if using glm5 model
+    $ApiKey = ""
+    $ApiUrl = "https://api.z.ai/api/anthropic"
+
+    if ($Model -eq 'glm5') {
+        Write-ColorOutput "`nGLM5 API Configuration Required" Yellow
+        Write-ColorOutput "GLM5 is accessed via Zhipu AI proxy: $ApiUrl" Cyan
+        Write-Host ""
+
+        # Check if API key is already in environment
+        $EnvKey = $env:ANTHROPIC_AUTH_TOKEN
+        if ($EnvKey) {
+            Write-ColorOutput "Found API key in ANTHROPIC_AUTH_TOKEN environment variable" Green
+            $UseEnvKey = Read-Host "Use existing environment variable key? (Y/n)"
+            if ($UseEnvKey -ne 'n' -and $UseEnvKey -ne 'N') {
+                $ApiKey = $EnvKey
+            }
+        }
+
+        # Prompt for API key if not using env variable
+        if (-not $ApiKey) {
+            Write-ColorOutput "Enter your GLM5 API key (format: id.secret):" Yellow
+            $ApiKey = Read-Host -MaskInput
+
+            if (-not $ApiKey) {
+                Write-ColorOutput "Warning: No API key provided. You'll need to configure it manually." Yellow
+                $ApiKey = "YOUR_GLM5_API_KEY_HERE"
+            }
+        }
+
+        # Ask about setting environment variables
+        Write-Host ""
+        $SetEnvVars = Read-Host "Set GLM5 environment variables for this session? (Y/n)"
+        if ($SetEnvVars -ne 'n' -and $SetEnvVars -ne 'N') {
+            $env:ANTHROPIC_BASE_URL = $ApiUrl
+            $env:ANTHROPIC_AUTH_TOKEN = $ApiKey
+            Write-ColorOutput "Environment variables set for this session" Green
+            Write-ColorOutput "Note: These will be lost when PowerShell closes. To make permanent:" Yellow
+            Write-ColorOutput "  Add to System Environment Variables:" Cyan
+            Write-Host "    ANTHROPIC_BASE_URL = $ApiUrl"
+            Write-Host "    ANTHROPIC_AUTH_TOKEN = your_api_key"
+        }
+    }
+
     # Create settings.json with Agent-First configuration
     $SettingsConfig = @{
-        _comment = "Claude Code Configuration - Agent-First Workflow"
+        _comment = "Claude Code Configuration - Agent-First Workflow with GLM5"
+        _comment2 = "GLM5 API: https://api.z.ai/api/anthropic (Zhipu AI proxy)"
         model = $Model
+        apiUrl = $ApiUrl
+        apiKey = $ApiKey
         permissions = @{
             defaultMode = "allow"
             allowedTools = @(
@@ -344,6 +391,32 @@ function Initialize-ClaudeConfig {
 
     Set-Content -Path $LocalConfigFile -Value $LocalSettingsConfig
     Write-ColorOutput "Created: $LocalConfigFile" Green
+
+    # Create environment setup script for GLM5
+    if ($Model -eq 'glm5') {
+        $EnvScriptPath = "$ConfigDir\setup-glm5-env.ps1"
+        $EnvScript = @"
+# GLM5 Environment Setup Script
+# Run this script in each PowerShell session to configure GLM5 environment
+
+# Set GLM5 API environment variables
+`$env:ANTHROPIC_BASE_URL = "$ApiUrl"
+`$env:ANTHROPIC_AUTH_TOKEN = "$ApiKey"
+
+Write-Host "GLM5 environment configured:" -ForegroundColor Green
+Write-Host "  ANTHROPIC_BASE_URL = `$env:ANTHROPIC_BASE_URL" -ForegroundColor Cyan
+Write-Host "  ANTHROPIC_AUTH_TOKEN = *** (set)" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "To make these variables permanent, add them to System Environment Variables:" -ForegroundColor Yellow
+Write-Host "  1. Press Win+R and type: sysdm.cpl" -ForegroundColor Cyan
+Write-Host "  2. Go to Advanced > Environment Variables" -ForegroundColor Cyan
+Write-Host "  3. Add new system or user variables:" -ForegroundColor Cyan
+Write-Host "     ANTHROPIC_BASE_URL = $ApiUrl" -ForegroundColor White
+Write-Host "     ANTHROPIC_AUTH_TOKEN = $ApiKey" -ForegroundColor White
+"@
+        Set-Content -Path $EnvScriptPath -Value $EnvScript
+        Write-ColorOutput "Created: $EnvScriptPath (run this in new sessions)" Green
+    }
 }
 
 function Install-Skills {
