@@ -43,9 +43,9 @@ When you run the installer with `-Model glm5`, it will:
 
 ### Method 1: Environment Variables (Recommended for Security)
 
-Set system environment variables:
+#### Windows (PowerShell)
 
-**PowerShell (User level):**
+**PowerShell Command (User level):**
 ```powershell
 [System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', 'https://api.z.ai/api/anthropic', 'User')
 [System.Environment]::SetEnvironmentVariable('ANTHROPIC_AUTH_TOKEN', 'your_api_key_here', 'User')
@@ -61,6 +61,47 @@ Set system environment variables:
    - Value: `your_api_key_here`
 4. Click OK and restart PowerShell
 
+#### Linux/macOS (Bash/Zsh)
+
+**Add to shell configuration file:**
+
+For Bash (`~/.bashrc`):
+```bash
+# GLM5 API Configuration
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
+export ANTHROPIC_AUTH_TOKEN="your_api_key_here"
+```
+
+For Zsh (`~/.zshrc`):
+```bash
+# GLM5 API Configuration
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
+export ANTHROPIC_AUTH_TOKEN="your_api_key_here"
+```
+
+For Fish (`~/.config/fish/config.fish`):
+```fish
+# GLM5 API Configuration
+set -gx ANTHROPIC_BASE_URL "https://api.z.ai/api/anthropic"
+set -gx ANTHROPIC_AUTH_TOKEN "your_api_key_here"
+```
+
+**Then apply the changes:**
+```bash
+# For Bash/Zsh
+source ~/.bashrc   # or source ~/.zshrc
+
+# For Fish (reloads automatically)
+# Or restart your terminal
+```
+
+**Using the installer (automatic):**
+```bash
+chmod +x install-claude-code.sh
+./install-claude-code.sh
+# The installer will automatically add these to your shell config
+```
+
 ### Method 2: Configuration File
 
 The installer creates `~/.claude/settings.json` with:
@@ -74,6 +115,8 @@ The installer creates `~/.claude/settings.json` with:
 
 ### Method 3: Per-Session Script
 
+#### Windows (PowerShell)
+
 Run the setup script created by the installer:
 ```powershell
 ~/.claude/setup-glm5-env.ps1
@@ -83,6 +126,28 @@ Or manually set in each session:
 ```powershell
 $env:ANTHROPIC_BASE_URL = "https://api.z.ai/api/anthropic"
 $env:ANTHROPIC_AUTH_TOKEN = "your_api_key_here"
+```
+
+#### Linux/macOS (Bash/Zsh)
+
+Add to your current session:
+```bash
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
+export ANTHROPIC_AUTH_TOKEN="your_api_key_here"
+```
+
+Or create a reusable script:
+```bash
+# Create script
+echo '#!/bin/bash
+export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
+export ANTHROPIC_AUTH_TOKEN="your_api_key_here"' > ~/.claude/setup-glm5-env.sh
+
+# Make executable
+chmod +x ~/.claude/setup-glm5-env.sh
+
+# Source in new sessions
+source ~/.claude/setup-glm5-env.sh
 ```
 
 ## How GLM5 Integration Works
@@ -127,10 +192,18 @@ The Zhipu AI proxy (`https://api.z.ai/api/anthropic`) provides:
 
 ### 1. Verify Environment Variables
 
+#### Windows (PowerShell)
 ```powershell
 # Check if variables are set
 $env:ANTHROPIC_BASE_URL
 $env:ANTHROPIC_AUTH_TOKEN
+```
+
+#### Linux/macOS (Bash/Zsh)
+```bash
+# Check if variables are set
+echo $ANTHROPIC_BASE_URL
+echo $ANTHROPIC_AUTH_TOKEN
 ```
 
 Expected output:
@@ -151,7 +224,8 @@ claude --model glm5 "Say hello and confirm you're running GLM5"
 
 ### 3. Check Configuration
 
-```powershell
+#### All Platforms
+```bash
 # View settings
 cat ~/.claude/settings.json
 

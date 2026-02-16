@@ -258,15 +258,23 @@ function Initialize-ClaudeConfig {
 
         # Ask about setting environment variables
         Write-Host ""
-        $SetEnvVars = Read-Host "Set GLM5 environment variables for this session? (Y/n)"
+        $SetEnvVars = Read-Host "Set GLM5 environment variables permanently? (Y/n)"
         if ($SetEnvVars -ne 'n' -and $SetEnvVars -ne 'N') {
+            # Set for current session
             $env:ANTHROPIC_BASE_URL = $ApiUrl
             $env:ANTHROPIC_AUTH_TOKEN = $ApiKey
-            Write-ColorOutput "Environment variables set for this session" Green
-            Write-ColorOutput "Note: These will be lost when PowerShell closes. To make permanent:" Yellow
-            Write-ColorOutput "  Add to System Environment Variables:" Cyan
-            Write-Host "    ANTHROPIC_BASE_URL = $ApiUrl"
-            Write-Host "    ANTHROPIC_AUTH_TOKEN = your_api_key"
+
+            # Set permanently at user level
+            try {
+                [System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', $ApiUrl, 'User')
+                [System.Environment]::SetEnvironmentVariable('ANTHROPIC_AUTH_TOKEN', $ApiKey, 'User')
+                Write-ColorOutput "✓ Environment variables set permanently (User level)" Green
+                Write-ColorOutput "  Note: Restart all terminals/apps to use new variables" Yellow
+            }
+            catch {
+                Write-ColorOutput "Warning: Could not set permanent environment variables: $_" Yellow
+                Write-ColorOutput "Variables set for current session only" Yellow
+            }
         }
     }
 

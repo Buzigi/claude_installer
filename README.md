@@ -27,7 +27,7 @@ This installer automates the complete setup of Claude Code CLI with GLM5 model c
 
 ## Installation
 
-### Quick Install
+### Quick Install (Windows)
 
 ```powershell
 # Run as Administrator
@@ -35,18 +35,39 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 .\Install-ClaudeCode.ps1
 ```
 
-### Custom Install
+### Quick Install (Linux/macOS)
+
+```bash
+# Make script executable (first time only)
+chmod +x install-claude-code.sh
+
+# Run installer
+./install-claude-code.sh
+```
+
+### Custom Install (Windows)
 
 ```powershell
 # Install with custom configuration
 .\Install-ClaudeCode.ps1 -Model glm5 -SkillsPath "C:\Users\$env:USERNAME\.claude\skills" -AgentsPath "C:\Users\$env:USERNAME\.claude\agents"
 ```
 
+### Custom Install (Linux/macOS)
+
+```bash
+# Install with custom model
+MODEL=glm5 ./install-claude-code.sh
+
+# Or with specific shell
+SHELL=/bin/zsh ./install-claude-code.sh
+```
+
 ## Project Structure
 
 ```
 claude-installer/
-├── Install-ClaudeCode.ps1          # Main installation script
+├── Install-ClaudeCode.ps1          # Windows installation script
+├── install-claude-code.sh           # Linux/macOS installation script
 ├── config/
 │   ├── glm5-config.json            # GLM5 model configuration
 │   ├── skills-repository.json      # Skills manifest
@@ -61,11 +82,16 @@ claude-installer/
 │   └── ...
 ├── templates/                       # Configuration templates
 │   ├── settings.json.template
-│   └── settings.local.json.template
+│   ├── settings.local.json.template
+│   ├── hooks.json.template
+│   ├── pre-prompt-hook.ps1.template
+│   └── pre-tool-hook.ps1.template
 └── docs/                            # Documentation
-    ├── INSTALLATION.md
-    ├── CONFIGURATION.md
-    └── TROUBLESHOOTING.md
+    ├── INSTALLATION.md              # Detailed installation guide
+    ├── CONFIGURATION.md             # Configuration guide
+    ├── TROUBLESHOOTING.md           # Troubleshooting
+    ├── GLM5-SETUP.md               # GLM5 specific setup
+    └── AGENT-FIRST-WORKFLOW.md     # Agent-First workflow guide
 ```
 
 ## Configuration
