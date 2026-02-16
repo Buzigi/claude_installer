@@ -1,0 +1,95 @@
+# Claude Code Pre-Tool Hook
+# This hook runs before every tool use and protects against destructive operations
+
+param(
+    [Parameter(Mandatory=$true)]
+    [string]$ToolName,
+
+    [Parameter(Mandatory=$true)]
+    [hashtable]$ToolInput,
+
+    [Parameter(Mandatory=$true)]
+    [hashtable]$Context
+)
+
+$HookConfigPath = "$env:USERPROFILE\.claude\hooks.json"
+if (-not (Test-Path $HookConfigPath)) {
+    return @{ allow = $true }
+}
+
+$HookConfig = Get-Content $HookConfigPath -Raw | ConvertFrom-Json
+$DeleteProtector = $HookConfig.hooks.'pre-tool'
+
+if (-not $DeleteProtector.enabled) {
+    return @{ allow = $true }
+}
+
+$config = $DeleteProtector.config
+
+# Check for destructive operations
+if ($ToolName -in $config.protectedOperations) {
+    $command = ""
+
+    if ($ToolName -eq "Bash" -and $ToolInput.ContainsKey('command')) {
+        $command = $ToolInput.command
+    } elseif ($ToolName -eq "Write" -and $ToolInput.ContainsKey('file_path')) {
+        $command = "Write to $($ToolInput.file_path)"
+    } elseif ($ToolName -eq "Edit" -and $ToolInput.ContainsKey('file_path')) {
+        $command = "Edit $($ToolInput.file_path)"
+    }
+
+    # Check for delete patterns
+    $isDeleteOperation = $false
+    foreach ($pattern in $config.deletePatterns) {
+        if ($command -match [regex]::Escape($pattern)) {
+            $isDeleteOperation = $true
+            break
+        }
+    }
+
+    # Check for protected paths
+    $isProtectedPath = $false
+    foreach ($path in $config.protectedPaths) {
+        $expandedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($path)
+        if ($command -match [regex]::Escape($expandedPath)) {
+            $isProtectedPath = $true
+            break
+        }
+    }
+
+    if ($isDeleteOperation -or $isProtectedPath) {
+        # Create backup if configured
+        if ($config.requireConfirmation -and $config.backupBeforeDelete) {
+            $backupPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($config.backupLocation)
+            if (-not (Test-Path $backupPath)) {
+                New-Item -Path $backupPath -ItemType Directory -Force | Out-Null
+            }
+            $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+            $backupFile = Join-Path $backupPath "pre_delete_backup_$timestamp.json"
+            @{
+                allow = $false
+                reason = "DESTRUCTIVE OPERATION DETECTED: $command
+
+This operation involves deletion or modification of a protected path.
+
+⚠️  PROTECTED ACTION REQUIRED ⚠️
+
+To proceed, you must:
+1. Acknowledge this is a destructive operation
+2. Confirm you understand the consequences
+3. Request explicit user permission
+
+Example response:
+'This is a destructive operation that will: [describe impact]
+I understand the consequences and request user permission to proceed.'
+
+Backup will be created at: $backupFile"
+                backupLocation = $backupFile
+            }
+            return
+        }
+    }
+}
+
+# Allow the operation
+return @{ allow = $true }

@@ -1,0 +1,199 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-02-16",
+  "totalAgents": 44,
+  "categories": {
+    "engineering": {
+      "description": "Software development and implementation agents",
+      "agents": [
+        {
+          "name": "backend-dev",
+          "file": "engineering/backend-dev.md",
+          "description": "Backend development specialist",
+          "enabled": true
+        },
+        {
+          "name": "frontend-dev",
+          "file": "engineering/frontend-dev.md",
+          "description": "Frontend development specialist",
+          "enabled": true
+        },
+        {
+          "name": "devops-engineer",
+          "file": "engineering/devops-engineer.md",
+          "description": "DevOps and infrastructure specialist",
+          "enabled": true
+        },
+        {
+          "name": "ai-engineer",
+          "file": "engineering/ai-engineer.md",
+          "description": "AI/ML engineering specialist",
+          "enabled": true
+        }
+      ]
+    },
+    "design": {
+      "description": "Design and user experience agents",
+      "agents": [
+        {
+          "name": "ui-designer",
+          "file": "design/ui-designer.md",
+          "description": "UI design specialist",
+          "enabled": true
+        },
+        {
+          "name": "ux-researcher",
+          "file": "design/ux-researcher.md",
+          "description": "UX research specialist",
+          "enabled": true
+        },
+        {
+          "name": "visual-storyteller",
+          "file": "design/visual-storyteller.md",
+          "description": "Visual storytelling and design",
+          "enabled": true
+        },
+        {
+          "name": "whimsy-injector",
+          "file": "design/whimsy-injector.md",
+          "description": "Creative and playful design elements",
+          "enabled": true
+        },
+        {
+          "name": "brand-guardian",
+          "file": "design/brand-guardian.md",
+          "description": "Brand consistency and identity",
+          "enabled": true
+        }
+      ]
+    },
+    "product": {
+      "description": "Product management and strategy agents",
+      "agents": [
+        {
+          "name": "product-manager",
+          "file": "product/product-manager.md",
+          "description": "Product management specialist",
+          "enabled": true
+        },
+        {
+          "name": "business-analyst",
+          "file": "product/business-analyst.md",
+          "description": "Business analysis specialist",
+          "enabled": true
+        }
+      ]
+    },
+    "testing": {
+      "description": "Quality assurance and testing agents",
+      "agents": [
+        {
+          "name": "test-runner",
+          "file": "testing/test-runner.md",
+          "description": "Test creation and execution specialist",
+          "enabled": true
+        },
+        {
+          "name": "qa-engineer",
+          "file": "testing/qa-engineer.md",
+          "description": "Quality assurance specialist",
+          "enabled": true
+        }
+      ]
+    },
+    "architecture": {
+      "description": "System design and architecture agents",
+      "agents": [
+        {
+          "name": "software-architect",
+          "file": "software-architect.md",
+          "description": "Software architecture specialist",
+          "enabled": true
+        },
+        {
+          "name": "backend-architect",
+          "file": "backend-architect.md",
+          "description": "Backend architecture specialist",
+          "enabled": true
+        }
+      ]
+    },
+    "project-management": {
+      "description": "Project coordination and management agents",
+      "agents": [
+        {
+          "name": "task-manager",
+          "file": "task-manager-agent.md",
+          "description": "Task orchestration and coordination",
+          "enabled": true
+        },
+        {
+          "name": "project-navigator",
+          "file": "project-navigator-agent.md",
+          "description": "Project structure and code navigation",
+          "enabled": true
+        }
+      ]
+    },
+    "marketing": {
+      "description": "Marketing and content creation agents",
+      "agents": [
+        {
+          "name": "content-writer",
+          "file": "marketing/content-writer.md",
+          "description": "Content creation specialist",
+          "enabled": true
+        }
+      ]
+    },
+    "studio-operations": {
+      "description": "Studio and operations management agents",
+      "agents": [
+        {
+          "name": "studio-coach",
+          "file": "bonus/studio-coach.md",
+          "description": "Studio operations and coaching",
+          "enabled": true
+        }
+      ]
+    },
+    "bonus": {
+      "description": "Specialized and experimental agents",
+      "agents": [
+        {
+          "name": "joker",
+          "file": "bonus/joker.md",
+          "description": "Humor and creative writing",
+          "enabled": true
+        }
+      ]
+    },
+    "specialized": {
+      "description": "Specialized domain agents",
+      "agents": [
+        {
+          "name": "git-github-specialist",
+          "file": "git-github-specialist.md",
+          "description": "Git and GitHub workflow specialist",
+          "enabled": true
+        }
+      ]
+    }
+  },
+  "coreAgents": [
+    "task-manager",
+    "project-navigator",
+    "software-architect",
+    "backend-dev",
+    "frontend-dev",
+    "test-runner",
+    "devops-engineer"
+  ],
+  "optionalAgents": [
+    "ai-engineer",
+    "ui-designer",
+    "ux-researcher",
+    "product-manager",
+    "qa-engineer"
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "_comment": "Claude Code Configuration Template - Auto-Agent Mode",
+  "_instructions": "Copy this file to ~/.claude/settings.json and customize as needed",
+  "model": "glm5",
+  "permissions": {
+    "defaultMode": "allow",
+    "allowedTools": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Task(*)",
+      "TaskOutput(*)",
+      "TaskStop(*)",
+      "NotebookEdit(*)",
+      "WebSearch(*)",
+      "WebFetch(*)",
+      "AskUserQuestion(*)",
+      "Skill(*)",
+      "EnterPlanMode(*)",
+      "ExitPlanMode(*)",
+      "TodoWrite(*)",
+      "mcp__4_5v_mcp__analyze_image(*)",
+      "mcp__web_reader__webReader(*)"
+    ],
+    "deniedTools": [],
+    "askBeforeUse": []
+  },
+  "agentOrchestration": {
+    "enabled": true,
+    "mode": "always",
+    "defaultAgent": "task-manager",
+    "agentSelectionStrategy": "automatic",
+    "fallbackToDirect": false,
+    "minTaskComplexity": 1,
+    "preferSpecializedAgents": true,
+    "allowAgentChaining": true,
+    "maxConcurrentAgents": 5,
+    "coordinationTimeout": 300000
+  },
+  "deleteProtection": {
+    "enabled": true,
+    "confirmBeforeDelete": true,
+    "protectedPaths": [
+      "~/.claude",
+      "~/projects",
+      "C:/Users/*/projects"
+    ],
+    "requireConfirmationFor": [
+      "Bash",
+      "Edit",
+      "Write"
+    ],
+    "deleteCommands": [
+      "rm",
+      "rmdir",
+      "del",
+      "Remove-Item",
+      "git clean"
+    ]
+  },
+  "uiPreferences": {
+    "theme": "dark",
+    "fontSize": 14,
+    "tabSize": 2,
+    "showLineNumbers": true,
+    "wordWrap": true,
+    "showAgentActivity": true,
+    "showTaskProgress": true
+  },
+  "featureFlags": {
+    "thinkingMode": true,
+    "planMode": true,
+    "streaming": true,
+    "autoSave": true,
+    "autoAgentMode": true,
+    "multiAgentCoordination": true
+  },
+  "advanced": {
+    "maxTokens": 8192,
+    "temperature": 0.7,
+    "cacheEnabled": true,
+    "debugMode": false,
+    "agentDebugEnabled": true
+  },
+  "hooks": {
+    "pre-prompt": "~/.claude/hooks/pre-prompt.ps1",
+    "pre-tool": "~/.claude/hooks/pre-tool.ps1",
+    "post-tool": "~/.claude/hooks/post-tool.ps1"
+  }
+}

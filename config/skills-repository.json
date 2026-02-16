@@ -1,0 +1,167 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-02-16",
+  "skills": [
+    {
+      "name": "drawio",
+      "description": "Create and edit draw.io diagrams in XML format",
+      "version": "1.0.0",
+      "source": "https://github.com/akiojin/llm-router",
+      "path": "skills/drawio",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md",
+        "templates/basic.drawio"
+      ],
+      "enabled": true,
+      "dependencies": [],
+      "tags": ["diagrams", "visualization", "documentation"]
+    },
+    {
+      "name": "git-workflow",
+      "description": "Advanced Git workflow management and automation",
+      "version": "1.0.0",
+      "source": "builtin",
+      "path": "skills/git-workflow",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md"
+      ],
+      "enabled": true,
+      "dependencies": [],
+      "tags": ["git", "version-control", "workflow"]
+    },
+    {
+      "name": "testing",
+      "description": "Comprehensive testing frameworks and strategies",
+      "version": "1.0.0",
+      "source": "builtin",
+      "path": "skills/testing",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md"
+      ],
+      "enabled": true,
+      "dependencies": [],
+      "tags": ["testing", "quality-assurance", "tdd"]
+    },
+    {
+      "name": "documentation",
+      "description": "Automated documentation generation and maintenance",
+      "version": "1.0.0",
+      "source": "builtin",
+      "path": "skills/documentation",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md"
+      ],
+      "enabled": true,
+      "dependencies": [],
+      "tags": ["documentation", "markdown", "api-docs"]
+    },
+    {
+      "name": "code-review",
+      "description": "Automated code review and quality analysis",
+      "version": "1.0.0",
+      "source": "builtin",
+      "path": "skills/code-review",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md"
+      ],
+      "enabled": true,
+      "dependencies": [],
+      "tags": ["code-review", "quality", "best-practices"]
+    },
+    {
+      "name": "refactoring",
+      "description": "Code refactoring and optimization techniques",
+      "version": "1.0.0",
+      "source": "builtin",
+      "path": "skills/refactoring",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md"
+      ],
+      "enabled": true,
+      "dependencies": [],
+      "tags": ["refactoring", "optimization", "clean-code"]
+    },
+    {
+      "name": "database",
+      "description": "Database design, migration, and query optimization",
+      "version": "1.0.0",
+      "source": "builtin",
+      "path": "skills/database",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md"
+      ],
+      "enabled": true,
+      "dependencies": [],
+      "tags": ["database", "sql", "migration"]
+    },
+    {
+      "name": "api-development",
+      "description": "RESTful API design and development",
+      "version": "1.0.0",
+      "source": "builtin",
+      "path": "skills/api-development",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md"
+      ],
+      "enabled": true,
+      "dependencies": [],
+      "tags": ["api", "rest", "backend"]
+    },
+    {
+      "name": "frontend",
+      "description": "Frontend development frameworks and best practices",
+      "version": "1.0.0",
+      "source": "builtin",
+      "path": "skills/frontend",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md"
+      ],
+      "enabled": true,
+      "dependencies": [],
+      "tags": ["frontend", "ui", "ux", "javascript"]
+    },
+    {
+      "name": "backend",
+      "description": "Backend development patterns and architecture",
+      "version": "1.0.0",
+      "source": "builtin",
+      "path": "skills/backend",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md"
+      ],
+      "enabled": true,
+      "dependencies": [],
+      "tags": ["backend", "server", "architecture"]
+    }
+  ],
+  "categories": {
+    "development": [
+      "git-workflow",
+      "testing",
+      "code-review",
+      "refactoring"
+    ],
+    "documentation": [
+      "documentation",
+      "drawio"
+    ],
+    "backend": [
+      "database",
+      "api-development",
+      "backend"
+    ],
+    "frontend": [
+      "frontend"
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "model": "glm5",
+  "apiEndpoint": "https://api.anthropic.com/v1/messages",
+  "modelConfig": {
+    "maxTokens": 8192,
+    "temperature": 0.7,
+    "topK": 40,
+    "topP": 0.95,
+    "stream": true
+  },
+  "capabilities": {
+    "tools": [
+      "Read",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash",
+      "MultiAgent"
+    ],
+    "features": [
+      "thinking_mode",
+      "plan_mode",
+      "skill_system",
+      "agent_system",
+      "mcp_integration"
+    ]
+  },
+  "skillConfiguration": {
+    "enabledSkills": [
+      "drawio",
+      "git-workflow",
+      "testing",
+      "documentation",
+      "code-review",
+      "refactoring",
+      "database",
+      "api-development",
+      "frontend",
+      "backend"
+    ],
+    "skillSearchPaths": [
+      "%USERPROFILE%\\.claude\\skills",
+      "%USERPROFILE%\\.claude\\projects\\claude-installer\\skills"
+    ]
+  },
+  "agentConfiguration": {
+    "enabledAgents": [
+      "task-manager",
+      "project-navigator",
+      "software-architect",
+      "backend-dev",
+      "frontend-dev",
+      "test-runner",
+      "devops-engineer"
+    ],
+    "agentSearchPaths": [
+      "%USERPROFILE%\\.claude\\agents",
+      "%USERPROFILE%\\.claude\\projects\\claude-installer\\agents"
+    ]
+  },
+  "permissions": {
+    "defaultMode": "allow",
+    "allowedTools": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Glob(*)",
+      "Grep(*)"
+    ],
+    "deniedTools": [],
+    "askBeforeUse": []
+  },
+  "uiConfiguration": {
+    "theme": "dark",
+    "thinkingModeEnabled": true,
+    "planModeEnabled": true,
+    "streamingEnabled": true,
+    "showLineNumbers": true
+  },
+  "advancedConfiguration": {
+    "cacheEnabled": true,
+    "cacheSizeMB": 512,
+    "historyEnabled": true,
+    "historyMaxEntries": 1000,
+    "telemetryEnabled": false,
+    "debugMode": false
+  }
+}

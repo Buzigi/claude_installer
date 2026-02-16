@@ -1,0 +1,34 @@
+# Claude Code Pre-Prompt Hook
+# This hook runs before every user prompt and enforces agent-first workflow
+
+param(
+    [Parameter(Mandatory=$true)]
+    [string]$Prompt,
+
+    [Parameter(Mandatory=$true)]
+    [hashtable]$Context
+)
+
+$HookConfigPath = "$env:USERPROFILE\.claude\hooks.json"
+if (Test-Path $HookConfigPath) {
+    $HookConfig = Get-Content $HookConfigPath -Raw | ConvertFrom-Json
+    $AgentOrchestrator = $HookConfig.hooks.'user-prompt-submit'
+
+    if ($AgentOrchestrator.enabled -and $AgentOrchestrator.config.forceAgentUsage) {
+        # Add agent delegation instruction to the prompt
+        $AgentInstruction = @"
+
+IMPORTANT: Always delegate this task to an appropriate specialized agent using the Task tool.
+- Use the Task tool with the most suitable subagent_type for this request
+- Available agents include: task-manager, project-navigator, frontend-developer, backend-architect, test-writer-fixer, and many more
+- DO NOT attempt to handle complex tasks directly - always use agents
+- For simple tasks, still consider using an agent for consistency and quality
+"@
+
+        # Return modified prompt with agent instruction
+        return $Prompt + $AgentInstruction
+    }
+}
+
+# Return original prompt if hook is disabled
+return $Prompt
