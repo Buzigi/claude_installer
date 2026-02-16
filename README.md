@@ -27,38 +27,63 @@ This installer automates the complete setup of Claude Code CLI with GLM5 model c
 
 ## Installation
 
-### Quick Install (Windows)
+### One-Liner Install (No Clone Required)
 
+**Windows (PowerShell) - Run as Administrator:**
 ```powershell
-# Run as Administrator
-Set-ExecutionPolicy Bypass -Scope Process -Force
+irm https://raw.githubusercontent.com/Buzigi/claude_installer/master/Install-ClaudeCode.ps1 | iex
+```
+
+**Linux/macOS (Bash/Zsh):**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Buzigi/claude_installer/master/install-claude-code.sh | bash
+```
+
+**That's it.** No git clone, no downloads, no manual steps. Just run the command and follow the prompts.
+
+---
+
+### Alternative: Clone and Run
+
+If you prefer to clone the repo first:
+
+**Windows:**
+```powershell
+git clone https://github.com/Buzigi/claude_installer.git
+cd claude_installer
 .\Install-ClaudeCode.ps1
 ```
 
-### Quick Install (Linux/macOS)
-
+**Linux/macOS:**
 ```bash
-# Make script executable (first time only)
+git clone https://github.com/Buzigi/claude_installer.git
+cd claude_installer
 chmod +x install-claude-code.sh
-
-# Run installer
 ./install-claude-code.sh
 ```
 
-### Custom Install (Windows)
+---
 
+### Custom Install Options
+
+**Windows (PowerShell):**
 ```powershell
-# Install with custom configuration
-.\Install-ClaudeCode.ps1 -Model glm5 -SkillsPath "C:\Users\$env:USERNAME\.claude\skills" -AgentsPath "C:\Users\$env:USERNAME\.claude\agents"
+# Custom paths
+.\Install-ClaudeCode.ps1 -SkillsPath "C:\custom\skills" -AgentsPath "C:\custom\agents"
+
+# Skip CLI installation (if already installed)
+.\Install-ClaudeCode.ps1 -SkipCLI
+
+# Include MCP servers
+.\Install-ClaudeCode.ps1 -IncludeMCP
 ```
 
-### Custom Install (Linux/macOS)
-
+**Linux/macOS:**
 ```bash
-# Install with custom model
+# Custom model
 MODEL=glm5 ./install-claude-code.sh
 
-# Or with specific shell
+# Specific shell
 SHELL=/bin/zsh ./install-claude-code.sh
 ```
 
