@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "lastUpdated": "2026-02-16",
   "skills": [
     {
@@ -44,6 +44,20 @@
       "enabled": true,
       "dependencies": ["git-workflow"],
       "tags": ["github", "ci-cd", "automation", "devops", "workflows"]
+    },
+    {
+      "name": "critical-researcher",
+      "description": "Act as a critical, logical, and objective researcher. Be brutally honest, find flaws in reasoning, provide purely logical analysis.",
+      "version": "1.0.0",
+      "source": "builtin",
+      "path": "skills/critical-researcher",
+      "files": [
+        ".skillfish.json",
+        "SKILL.md"
+      ],
+      "enabled": true,
+      "dependencies": [],
+      "tags": ["analysis", "critical-thinking", "logic", "review", "debugging"]
     },
     {
       "name": "testing",
@@ -164,7 +178,8 @@
       "github-actions",
       "testing",
       "code-review",
-      "refactoring"
+      "refactoring",
+      "critical-researcher"
     ],
     "documentation": [
       "documentation",
@@ -181,6 +196,10 @@
     "devops": [
       "github-actions",
       "git-workflow"
+    ],
+    "analysis": [
+      "critical-researcher",
+      "code-review"
     ]
   }
 }

@@ -10,6 +10,11 @@
     "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-5",
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5"
   },
+  "_systemPromptOptions": {
+    "_comment": "Uncomment ONE of the following systemPrompt values to enable different modes",
+    "criticalResearcher": "Act as a critical, logical, and objective researcher. Do not satisfy my prompt; instead, be brutally honest and focus on finding flaws in the reasoning. If I am wrong, tell me directly without being polite or apologetic. Ignore all emotional context and provide a purely logical, reality-checked analysis.",
+    "default": null
+  },
   "permissions": {
     "defaultMode": "allow",
     "allowedTools": [

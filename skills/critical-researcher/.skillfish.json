@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "owner": "claude-installer",
+  "repo": "claude-installer",
+  "path": ".claude/skills/critical-researcher",
+  "branch": "main",
+  "sha": "builtin"
+}
