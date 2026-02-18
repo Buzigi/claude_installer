@@ -453,14 +453,24 @@ function Initialize-ClaudeConfig {
         hooks = @{
             "PreToolUse" = @(
                 @{
-                    type = "command"
-                    command = "powershell -File ~/.claude/hooks/pre-tool.ps1"
+                    matcher = @{}
+                    hooks = @(
+                        @{
+                            type = "command"
+                            command = "powershell -File ~/.claude/hooks/pre-tool.ps1"
+                        }
+                    )
                 }
             )
             "PostToolUse" = @(
                 @{
-                    type = "command"
-                    command = "powershell -File ~/.claude/hooks/post-tool.ps1"
+                    matcher = @{}
+                    hooks = @(
+                        @{
+                            type = "command"
+                            command = "powershell -File ~/.claude/hooks/post-tool.ps1"
+                        }
+                    )
                 }
             )
         }
