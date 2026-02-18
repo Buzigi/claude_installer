@@ -1,5 +1,4 @@
 #requires -Version 5.1
-#requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
@@ -57,6 +56,14 @@ param(
 # GitHub repo base URL for remote (irm | iex) execution
 $RepoBaseUrl = "https://raw.githubusercontent.com/Buzigi/claude_installer/master"
 $IsRemoteExecution = [string]::IsNullOrEmpty($PSScriptRoot)
+
+# Check for admin privileges (soft check instead of #requires -RunAsAdministrator)
+$IsAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $IsAdmin) {
+    Write-Host "WARNING: Running without Administrator privileges. Some operations may fail." -ForegroundColor Yellow
+    Write-Host "Tip: Right-click PowerShell and select 'Run as Administrator' for best results." -ForegroundColor Yellow
+    Write-Host ""
+}
 
 #region Helper Functions
 
@@ -1199,7 +1206,7 @@ function Start-Installation {
     $Confirm = Read-Host "Proceed with installation? (Y/n)"
     if ($Confirm -eq 'n' -or $Confirm -eq 'N') {
         Write-ColorOutput "Installation cancelled" Yellow
-        exit 0
+        return
     }
 
     # Step 1: Install CLI
@@ -1207,7 +1214,8 @@ function Start-Installation {
     Write-Step -Message "Installing Claude Code CLI" -StepNumber $CurrentStep -TotalSteps $TotalSteps
     if (-not $SkipCLI) {
         if (-not (Invoke-Step -StepName "CLI Installation" -ScriptBlock ${function:Install-ClaudeCLI})) {
-            throw "CLI installation failed"
+            Write-ColorOutput "CLI installation failed. Aborting." Red
+            return
         }
     }
     else {
@@ -1218,7 +1226,8 @@ function Start-Installation {
     $CurrentStep++
     Write-Step -Message "Initializing Configuration" -StepNumber $CurrentStep -TotalSteps $TotalSteps
     if (-not (Invoke-Step -StepName "Configuration Initialization" -ScriptBlock ${function:Initialize-ClaudeConfig})) {
-        throw "Configuration initialization failed"
+        Write-ColorOutput "Configuration initialization failed. Aborting." Red
+        return
     }
 
     # Step 3: Install Skills
@@ -1266,15 +1275,27 @@ function Start-Installation {
 
     if ($TestResult) {
         Write-ColorOutput "`nInstallation completed successfully!" Green
-        exit 0
     }
     else {
         Write-ColorOutput "`nInstallation completed with errors. Please review the output above." Yellow
-        exit 1
     }
 }
 
-# Start installation
-Start-Installation
+# Start installation with error handling that keeps the window open
+try {
+    Start-Installation
+}
+catch {
+    Write-Host "`n`nINSTALLATION ERROR: $_" -ForegroundColor Red
+    Write-Host $_.ScriptStackTrace -ForegroundColor DarkRed
+}
+finally {
+    # Keep window open so the user can read the output
+    if ($IsRemoteExecution) {
+        Write-Host "`n"
+        Write-Host "Press any key to continue..." -ForegroundColor Cyan
+        $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+    }
+}
 
 #endregion
