@@ -4,6 +4,17 @@
 
 set -e
 
+# Parse command line arguments
+ASSUME_YES=false
+for arg in "$@"; do
+    case $arg in
+        -y|--yes|--assume-yes)
+            ASSUME_YES=true
+            shift
+            ;;
+    esac
+done
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -31,6 +42,34 @@ print_header() {
     echo ""
 }
 
+show_usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -y, --yes, --assume-yes    Run non-interactively, accept all defaults"
+    echo "  -h, --help                 Show this help message"
+    echo ""
+    echo "Environment Variables:"
+    echo "  MODEL                      Model to configure (default: glm5)"
+    echo "  ANTHROPIC_AUTH_TOKEN       Pre-configured API key"
+    echo ""
+    echo "Examples:"
+    echo "  curl -fsSL <url> | bash              # Interactive install"
+    echo "  curl -fsSL <url> | bash -s -- -y     # Non-interactive install"
+    echo "  ANTHROPIC_AUTH_TOKEN=x.x $0 -y       # With pre-set API key"
+    exit 0
+}
+
+# Check for help flag
+for arg in "$@"; do
+    case $arg in
+        -h|--help)
+            print_header
+            show_usage
+            ;;
+    esac
+done
+
 print_step() {
     local step=$1
     local total=$2
@@ -54,6 +93,59 @@ print_warning() {
 
 print_info() {
     echo -e "${BLUE}ℹ $1${NC}"
+}
+
+# Prompt user with default - returns 0 for yes, 1 for no
+# Auto-accepts if ASSUME_YES is true or stdin is not a terminal
+prompt_yes_no() {
+    local prompt="$1"
+    local default="${2:-Y}"  # Default to Yes
+
+    if [ "$ASSUME_YES" = true ]; then
+        return 0
+    fi
+
+    # Check if stdin is a terminal
+    if [ ! -t 0 ]; then
+        print_info "Non-interactive mode: auto-accepting '$prompt'"
+        return 0
+    fi
+
+    local reply
+    read -p "$prompt ($default/n) " -n 1 -r
+    echo
+
+    if [ -z "$REPLY" ]; then
+        REPLY="$default"
+    fi
+
+    [[ $REPLY =~ ^[Yy]$ ]]
+}
+
+# Prompt for input with default value
+prompt_input() {
+    local prompt="$1"
+    local default="$2"
+    local var_name="$3"
+
+    if [ "$ASSUME_YES" = true ] && [ -n "$default" ]; then
+        eval "$var_name=\"$default\""
+        return
+    fi
+
+    # Check if stdin is a terminal
+    if [ ! -t 0 ]; then
+        print_info "Non-interactive mode: using default for '$prompt'"
+        eval "$var_name=\"$default\""
+        return
+    fi
+
+    local input
+    read -p "$prompt [$default]: " input
+    if [ -z "$input" ]; then
+        input="$default"
+    fi
+    eval "$var_name=\"$input\""
 }
 
 # Helper functions
@@ -107,9 +199,7 @@ install_claude_cli() {
         local current_version=$(claude --version 2>&1 || echo "unknown")
         print_success "Claude CLI already installed: $current_version"
 
-        read -p "Update to latest version? (y/N) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if prompt_yes_no "Update to latest version?" "N"; then
             print_info "Updating Claude CLI..."
             claude update
             print_success "Claude CLI updated"
@@ -144,9 +234,7 @@ configure_glm5_api() {
     # Check for existing env vars
     if [ -n "$ANTHROPIC_AUTH_TOKEN" ]; then
         print_success "Found API key in ANTHROPIC_AUTH_TOKEN"
-        read -p "Use existing API key? (Y/n) " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+        if prompt_yes_no "Use existing API key?" "Y"; then
             api_key="$ANTHROPIC_AUTH_TOKEN"
         fi
     fi
@@ -157,7 +245,15 @@ configure_glm5_api() {
         print_info "GLM5 API Configuration"
         print_info "API Endpoint: $api_url"
         echo ""
-        read -p "Enter your GLM5 API key (format: id.secret): " api_key
+
+        # Check if running interactively
+        if [ -t 0 ]; then
+            read -p "Enter your GLM5 API key (format: id.secret): " api_key
+        else
+            print_warning "Non-interactive mode: API key not provided."
+            print_info "Set ANTHROPIC_AUTH_TOKEN environment variable before running, or run interactively."
+            api_key="YOUR_GLM5_API_KEY_HERE"
+        fi
 
         if [ -z "$api_key" ]; then
             print_warning "No API key provided. You'll need to configure it manually."
@@ -167,9 +263,7 @@ configure_glm5_api() {
 
     # Set environment variables permanently
     echo ""
-    read -p "Set GLM5 environment variables permanently? (Y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+    if prompt_yes_no "Set GLM5 environment variables permanently?" "Y"; then
         # Determine shell and add to appropriate rc file
         local env_export=""
         local fish_syntax=""
@@ -603,9 +697,7 @@ main() {
     echo "  Shell Config: $SHELL_RC"
     echo ""
 
-    read -p "Continue with installation? (Y/n) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Nn]$ ]]; then
+    if ! prompt_yes_no "Continue with installation?" "Y"; then
         print_info "Installation cancelled."
         exit 0
     fi

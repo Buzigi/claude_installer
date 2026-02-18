@@ -39,6 +39,15 @@ $f="$env:TEMP\Install-ClaudeCode.ps1"; irm https://raw.githubusercontent.com/Buz
 curl -fsSL https://raw.githubusercontent.com/Buzigi/claude_installer/master/install-claude-code.sh | bash
 ```
 
+**Non-interactive Install (for automation/scripts):**
+```bash
+# With API key pre-set
+ANTHROPIC_AUTH_TOKEN="your_api_key_here" curl -fsSL https://raw.githubusercontent.com/Buzigi/claude_installer/master/install-claude-code.sh | bash -s -- -y
+
+# Or pass the -y flag for auto-accept defaults
+curl -fsSL https://raw.githubusercontent.com/Buzigi/claude_installer/master/install-claude-code.sh | bash -s -- -y
+```
+
 **That's it.** No git clone, no downloads, no manual steps. Just run the command and follow the prompts.
 
 ---
