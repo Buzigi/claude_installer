@@ -54,6 +54,10 @@ param(
     [switch]$IncludeMCP = $true
 )
 
+# GitHub repo base URL for remote (irm | iex) execution
+$RepoBaseUrl = "https://raw.githubusercontent.com/Buzigi/claude_installer/master"
+$IsRemoteExecution = [string]::IsNullOrEmpty($PSScriptRoot)
+
 #region Helper Functions
 
 function Write-ColorOutput {
@@ -452,21 +456,41 @@ function Install-Skills {
     # Create skills directory
     New-DirectoryStructure @($SkillsPath)
 
-    # Copy skills from installer
-    $InstallerSkillsPath = Join-Path $PSScriptRoot "skills"
-    if (Test-Path $InstallerSkillsPath) {
-        $SkillDirs = Get-ChildItem -Path $InstallerSkillsPath -Directory
-        foreach ($SkillDir in $SkillDirs) {
-            $DestPath = Join-Path $SkillsPath $SkillDir.Name
-            Write-ColorOutput "Installing skill: $($SkillDir.Name)" DarkGray
-
-            # Copy entire skill directory
-            Copy-Item -Path $SkillDir.FullName -Destination $DestPath -Recurse -Force
+    # Copy skills from installer (local) or download from GitHub (remote)
+    if (-not $IsRemoteExecution) {
+        $InstallerSkillsPath = Join-Path $PSScriptRoot "skills"
+        if (Test-Path $InstallerSkillsPath) {
+            $SkillDirs = Get-ChildItem -Path $InstallerSkillsPath -Directory
+            foreach ($SkillDir in $SkillDirs) {
+                $DestPath = Join-Path $SkillsPath $SkillDir.Name
+                Write-ColorOutput "Installing skill: $($SkillDir.Name)" DarkGray
+                Copy-Item -Path $SkillDir.FullName -Destination $DestPath -Recurse -Force
+            }
+            Write-ColorOutput "Installed $($SkillDirs.Count) skills" Green
         }
-        Write-ColorOutput "Installed $($SkillDirs.Count) skills" Green
+        else {
+            Write-ColorOutput "No skills found in installer directory" Yellow
+        }
     }
     else {
-        Write-ColorOutput "No skills found in installer directory" Yellow
+        # Remote execution: download skills from GitHub
+        Write-ColorOutput "Downloading skills from GitHub repository..." Yellow
+        $SkillNames = @("critical-researcher", "git-workflow", "github-actions")
+        $InstalledCount = 0
+        foreach ($SkillName in $SkillNames) {
+            $DestPath = Join-Path $SkillsPath $SkillName
+            New-DirectoryStructure @($DestPath)
+            try {
+                $SkillContent = Invoke-RestMethod -Uri "$RepoBaseUrl/skills/$SkillName/SKILL.md"
+                Set-Content -Path (Join-Path $DestPath "SKILL.md") -Value $SkillContent -Encoding UTF8
+                Write-ColorOutput "Installed skill: $SkillName" DarkGray
+                $InstalledCount++
+            }
+            catch {
+                Write-ColorOutput "Failed to download skill: $SkillName - $_" Yellow
+            }
+        }
+        Write-ColorOutput "Installed $InstalledCount skills from GitHub" Green
     }
 
     # Install drawio skill if not present
@@ -492,19 +516,45 @@ function Install-Agents {
     # Create agents directory
     New-DirectoryStructure @($AgentsPath)
 
-    # Copy agents from installer
-    $InstallerAgentsPath = Join-Path $PSScriptRoot "agents"
-    if (Test-Path $InstallerAgentsPath) {
-        $AgentFiles = Get-ChildItem -Path $InstallerAgentsPath -File -Filter "*.md"
-        foreach ($AgentFile in $AgentFiles) {
-            $DestPath = Join-Path $AgentsPath $AgentFile.Name
-            Write-ColorOutput "Installing agent: $($AgentFile.BaseName)" DarkGray
-            Copy-Item -Path $AgentFile.FullName -Destination $DestPath -Force
+    # Copy agents from installer (local) or download from GitHub (remote)
+    if (-not $IsRemoteExecution) {
+        $InstallerAgentsPath = Join-Path $PSScriptRoot "agents"
+        if (Test-Path $InstallerAgentsPath) {
+            $AgentFiles = Get-ChildItem -Path $InstallerAgentsPath -File -Filter "*.md"
+            foreach ($AgentFile in $AgentFiles) {
+                $DestPath = Join-Path $AgentsPath $AgentFile.Name
+                Write-ColorOutput "Installing agent: $($AgentFile.BaseName)" DarkGray
+                Copy-Item -Path $AgentFile.FullName -Destination $DestPath -Force
+            }
+            Write-ColorOutput "Installed $($AgentFiles.Count) agents" Green
         }
-        Write-ColorOutput "Installed $($AgentFiles.Count) agents" Green
+        else {
+            Write-ColorOutput "No agents found in installer directory" Yellow
+        }
     }
     else {
-        Write-ColorOutput "No agents found in installer directory" Yellow
+        # Remote execution: download agents from GitHub
+        Write-ColorOutput "Downloading agents from GitHub repository..." Yellow
+        $AgentNames = @(
+            "git-github-specialist.md",
+            "project-navigator-agent.md",
+            "software-architect.md",
+            "task-manager-agent.md"
+        )
+        $InstalledCount = 0
+        foreach ($AgentName in $AgentNames) {
+            $DestPath = Join-Path $AgentsPath $AgentName
+            try {
+                $AgentContent = Invoke-RestMethod -Uri "$RepoBaseUrl/agents/$AgentName"
+                Set-Content -Path $DestPath -Value $AgentContent -Encoding UTF8
+                Write-ColorOutput "Installed agent: $([System.IO.Path]::GetFileNameWithoutExtension($AgentName))" DarkGray
+                $InstalledCount++
+            }
+            catch {
+                Write-ColorOutput "Failed to download agent: $AgentName - $_" Yellow
+            }
+        }
+        Write-ColorOutput "Installed $InstalledCount agents from GitHub" Green
     }
 
     # Install additional agents from GitHub if not present
@@ -552,27 +602,38 @@ function Initialize-MCPServers {
         $Config = Get-Content $ConfigFile -Raw | ConvertFrom-Json
     }
     else {
-        $Config = @{
-            projects = @{}
+        $Config = [PSCustomObject]@{
+            projects = [PSCustomObject]@{}
         }
+    }
+
+    # Ensure projects property exists
+    if (-not $Config.PSObject.Properties['projects'] -or $null -eq $Config.projects) {
+        $Config | Add-Member -NotePropertyName 'projects' -NotePropertyValue ([PSCustomObject]@{}) -Force
     }
 
     # Add MCP servers to default project
     $DefaultProjectPath = $InstallPath
-    if (-not $Config.projects.$DefaultProjectPath) {
-        $Config.projects | Add-Member -NotePropertyName $DefaultProjectPath -NotePropertyValue @{
-            mcpServers = @{}
+    if (-not $Config.projects.PSObject.Properties[$DefaultProjectPath]) {
+        $Config.projects | Add-Member -NotePropertyName $DefaultProjectPath -NotePropertyValue ([PSCustomObject]@{
+            mcpServers = [PSCustomObject]@{}
             allowedTools = @()
-        } -Force
+        }) -Force
+    }
+
+    # Ensure mcpServers property exists on the project
+    $ProjectConfig = $Config.projects.$DefaultProjectPath
+    if (-not $ProjectConfig.PSObject.Properties['mcpServers'] -or $null -eq $ProjectConfig.mcpServers) {
+        $ProjectConfig | Add-Member -NotePropertyName 'mcpServers' -NotePropertyValue ([PSCustomObject]@{}) -Force
     }
 
     # Add chrome-devtools MCP server
-    $Config.projects.$DefaultProjectPath.mcpServers | Add-Member -NotePropertyName "chrome-devtools" -NotePropertyValue @{
+    $ProjectConfig.mcpServers | Add-Member -NotePropertyName "chrome-devtools" -NotePropertyValue ([PSCustomObject]@{
         type = "stdio"
         command = "npx"
         args = @("chrome-devtools-mcp@latest")
-        env = @{}
-    } -Force
+        env = [PSCustomObject]@{}
+    }) -Force
 
     # Save config
     $Config | ConvertTo-Json -Depth 10 | Set-Content $ConfigFile
@@ -1093,9 +1154,16 @@ function Show-NextSteps {
     Write-Host "`n"
 
     Write-ColorOutput "Documentation:" Yellow
-    Write-Host "  - README: $(Join-Path $PSScriptRoot "README.md")"
-    Write-Host "  - Configuration: $(Join-Path $PSScriptRoot "docs\CONFIGURATION.md")"
-    Write-Host "  - Troubleshooting: $(Join-Path $PSScriptRoot "docs\TROUBLESHOOTING.md")"
+    if (-not $IsRemoteExecution) {
+        Write-Host "  - README: $(Join-Path $PSScriptRoot "README.md")"
+        Write-Host "  - Configuration: $(Join-Path $PSScriptRoot "docs\CONFIGURATION.md")"
+        Write-Host "  - Troubleshooting: $(Join-Path $PSScriptRoot "docs\TROUBLESHOOTING.md")"
+    }
+    else {
+        Write-Host "  - README: https://github.com/Buzigi/claude_installer/blob/master/README.md"
+        Write-Host "  - Configuration: https://github.com/Buzigi/claude_installer/blob/master/docs/CONFIGURATION.md"
+        Write-Host "  - Troubleshooting: https://github.com/Buzigi/claude_installer/blob/master/docs/TROUBLESHOOTING.md"
+    }
     Write-Host "`n"
 
     Write-ColorOutput "For self-referential capabilities:" Yellow
