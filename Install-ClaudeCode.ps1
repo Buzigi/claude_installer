@@ -228,6 +228,43 @@ function Install-ClaudeCLI {
                 $env:Path = "$localBin;$env:Path"
             }
 
+            # Persist ~/.local/bin to User PATH so it survives new sessions
+            if ((Test-Path $localBin)) {
+                $persistentUserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+                if (-not $persistentUserPath -or $persistentUserPath -notlike "*$localBin*") {
+                    if ($persistentUserPath) {
+                        [Environment]::SetEnvironmentVariable("Path", "$localBin;$persistentUserPath", "User")
+                    }
+                    else {
+                        [Environment]::SetEnvironmentVariable("Path", $localBin, "User")
+                    }
+                    Write-ColorOutput "Added $localBin to persistent User PATH" Green
+                }
+
+                # Also add to PowerShell profile for extra reliability
+                $profileDir = Split-Path $PROFILE -Parent
+                if (-not (Test-Path $profileDir)) {
+                    New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
+                }
+                if (-not (Test-Path $PROFILE)) {
+                    New-Item -ItemType File -Path $PROFILE -Force | Out-Null
+                }
+                $profileContent = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
+                $pathSnippet = '# Claude Code CLI - ensure ~/.local/bin is in PATH'
+                if (-not $profileContent -or $profileContent -notlike "*$pathSnippet*") {
+                    $profileBlock = @"
+
+$pathSnippet
+`$localBin = Join-Path `$env:USERPROFILE ".local\bin"
+if ((Test-Path `$localBin) -and (`$env:Path -notlike "*`$localBin*")) {
+    `$env:Path = "`$localBin;`$env:Path"
+}
+"@
+                    Add-Content -Path $PROFILE -Value $profileBlock
+                    Write-ColorOutput "Added PATH entry to PowerShell profile: $PROFILE" Green
+                }
+            }
+
             if (Test-Command "claude") {
                 Write-ColorOutput "Claude CLI installed successfully" Green
             }
@@ -1129,6 +1166,17 @@ function Test-Installation {
         }
         if (Test-Command "claude") {
             Write-ColorOutput "[OK] Claude CLI available (after PATH refresh)" Green
+            # Persist fix for future sessions
+            $persistentUserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+            if (-not $persistentUserPath -or $persistentUserPath -notlike "*$localBin*") {
+                if ($persistentUserPath) {
+                    [Environment]::SetEnvironmentVariable("Path", "$localBin;$persistentUserPath", "User")
+                }
+                else {
+                    [Environment]::SetEnvironmentVariable("Path", $localBin, "User")
+                }
+                Write-ColorOutput "Persisted $localBin to User PATH for future sessions" Green
+            }
             $TestsPassed++
         }
         else {
