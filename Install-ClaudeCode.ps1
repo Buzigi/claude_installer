@@ -216,7 +216,24 @@ function Install-ClaudeCLI {
             # Use the official native installer (npm installation is deprecated)
             $installScript = Invoke-RestMethod -Uri "https://claude.ai/install.ps1"
             Invoke-Command -ScriptBlock ([scriptblock]::Create($installScript))
-            Write-ColorOutput "Claude CLI installed successfully" Green
+
+            # Refresh PATH so the current session can find the newly installed binary
+            $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+            $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+            $env:Path = "$machinePath;$userPath"
+
+            # Also add the common install location explicitly if not already present
+            $localBin = Join-Path $env:USERPROFILE ".local\bin"
+            if ((Test-Path $localBin) -and ($env:Path -notlike "*$localBin*")) {
+                $env:Path = "$localBin;$env:Path"
+            }
+
+            if (Test-Command "claude") {
+                Write-ColorOutput "Claude CLI installed successfully" Green
+            }
+            else {
+                throw "Claude CLI binary not found after installation. Check that the installer completed correctly."
+            }
         }
         catch {
             Write-ColorOutput "Native installer failed, trying npm fallback (deprecated)..." Yellow
@@ -1096,8 +1113,19 @@ function Test-Installation {
         $TestsPassed++
     }
     else {
-        Write-ColorOutput "[FAIL] Claude CLI not found" Red
-        $TestsFailed++
+        # Try refreshing PATH one more time before failing
+        $localBin = Join-Path $env:USERPROFILE ".local\bin"
+        if ((Test-Path $localBin) -and ($env:Path -notlike "*$localBin*")) {
+            $env:Path = "$localBin;$env:Path"
+        }
+        if (Test-Command "claude") {
+            Write-ColorOutput "[OK] Claude CLI available (after PATH refresh)" Green
+            $TestsPassed++
+        }
+        else {
+            Write-ColorOutput "[FAIL] Claude CLI not found" Red
+            $TestsFailed++
+        }
     }
 
     # Test config
@@ -1134,7 +1162,9 @@ function Test-Installation {
 
     Write-ColorOutput "`nTest Results: $TestsPassed passed, $TestsFailed failed" $(if ($TestsFailed -eq 0) { "Green" } else { "Yellow" })
 
-    return $TestsFailed -eq 0
+    if ($TestsFailed -gt 0) {
+        throw "$TestsFailed test(s) failed. Review the output above for details."
+    }
 }
 
 function Show-NextSteps {
