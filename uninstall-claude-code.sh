@@ -32,6 +32,8 @@ while [[ $# -gt 0 ]]; do
             echo "  --keep-env      Keep ANTHROPIC_* environment variables"
             echo "  --force, -f     Skip all confirmation prompts"
             echo "  --help, -h      Show this help message"
+            echo ""
+            echo "Note: When piped (curl | bash), confirmation prompts are auto-accepted."
             exit 0
             ;;
         *)
@@ -75,6 +77,11 @@ print_warn()    { echo -e "${YELLOW}$1${NC}"; }
 
 confirm() {
     if $FORCE; then return 0; fi
+    # Auto-confirm if stdin is not a terminal (piped execution)
+    if [ ! -t 0 ]; then
+        print_info "Non-interactive mode: auto-confirming '$1'"
+        return 0
+    fi
     read -p "$1 (y/N) " -n 1 -r
     echo
     [[ $REPLY =~ ^[Yy]$ ]]

@@ -343,6 +343,11 @@ $f="$env:TEMP\Uninstall-ClaudeCode.ps1"; irm "https://api.github.com/repos/Buzig
 curl -fsSL https://raw.githubusercontent.com/Buzigi/claude_installer/master/uninstall-claude-code.sh | bash
 ```
 
+**Non-interactive Uninstall:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/Buzigi/claude_installer/master/uninstall-claude-code.sh | bash -s -- --force
+```
+
 **From Cloned Repo:**
 
 *Windows:*
