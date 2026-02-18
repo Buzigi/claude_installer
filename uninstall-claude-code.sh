@@ -219,24 +219,21 @@ remove_env_vars() {
 
             if [[ "$rc_file" == *"fish"* ]]; then
                 # Fish shell: remove set -gx lines
-                sed -i.tmp '/# GLM5 API Configuration/d' "$rc_file"
-                sed -i.tmp '/set -gx ANTHROPIC_BASE_URL/d' "$rc_file"
-                sed -i.tmp '/set -gx ANTHROPIC_AUTH_TOKEN/d' "$rc_file"
-                sed -i.tmp '/set -gx ANTHROPIC_API_KEY/d' "$rc_file"
-                sed -i.tmp '/set -gx ANTHROPIC_DEFAULT_/d' "$rc_file"
-                sed -i.tmp '/set -gx API_TIMEOUT_MS/d' "$rc_file"
+                sed -i '/# GLM5 API Configuration/d' "$rc_file" 2>/dev/null || true
+                sed -i '/set -gx ANTHROPIC_BASE_URL/d' "$rc_file" 2>/dev/null || true
+                sed -i '/set -gx ANTHROPIC_AUTH_TOKEN/d' "$rc_file" 2>/dev/null || true
+                sed -i '/set -gx ANTHROPIC_API_KEY/d' "$rc_file" 2>/dev/null || true
+                sed -i '/set -gx ANTHROPIC_DEFAULT_/d' "$rc_file" 2>/dev/null || true
+                sed -i '/set -gx API_TIMEOUT_MS/d' "$rc_file" 2>/dev/null || true
             else
                 # Bash/Zsh: remove export lines
-                sed -i.tmp '/# GLM5 API Configuration/d' "$rc_file"
-                sed -i.tmp '/export ANTHROPIC_BASE_URL/d' "$rc_file"
-                sed -i.tmp '/export ANTHROPIC_AUTH_TOKEN/d' "$rc_file"
-                sed -i.tmp '/export ANTHROPIC_API_KEY/d' "$rc_file"
-                sed -i.tmp '/export ANTHROPIC_DEFAULT_/d' "$rc_file"
-                sed -i.tmp '/export API_TIMEOUT_MS/d' "$rc_file"
+                sed -i '/# GLM5 API Configuration/d' "$rc_file" 2>/dev/null || true
+                sed -i '/export ANTHROPIC_BASE_URL/d' "$rc_file" 2>/dev/null || true
+                sed -i '/export ANTHROPIC_AUTH_TOKEN/d' "$rc_file" 2>/dev/null || true
+                sed -i '/export ANTHROPIC_API_KEY/d' "$rc_file" 2>/dev/null || true
+                sed -i '/export ANTHROPIC_DEFAULT_/d' "$rc_file" 2>/dev/null || true
+                sed -i '/export API_TIMEOUT_MS/d' "$rc_file" 2>/dev/null || true
             fi
-
-            # Remove sed temp files
-            rm -f "${rc_file}.tmp"
 
             print_info "Cleaned: $rc_file"
             removed=true
@@ -272,9 +269,8 @@ remove_path_entries() {
             # Only remove claude-specific PATH additions, not generic ones
             if grep -q "claude\|Claude" "$rc_file" 2>/dev/null; then
                 # Remove Claude-specific PATH lines
-                sed -i.tmp '/# Claude Code/d' "$rc_file"
-                sed -i.tmp '/# Added by Claude/d' "$rc_file"
-                rm -f "${rc_file}.tmp"
+                sed -i '/# Claude Code/d' "$rc_file" 2>/dev/null || true
+                sed -i '/# Added by Claude/d' "$rc_file" 2>/dev/null || true
                 print_info "Cleaned Claude PATH entries from: $rc_file"
                 removed=true
             fi
