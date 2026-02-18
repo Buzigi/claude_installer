@@ -1,6 +1,4 @@
-#requires -Version 5.1
-
-<#
+﻿<#
 .SYNOPSIS
     Claude Code CLI Installer with GLM5 Configuration
 
@@ -53,7 +51,7 @@ param(
     [switch]$IncludeMCP = $true
 )
 
-# GitHub repo base URL for remote (irm | iex) execution
+# GitHub repo base URL for remote execution
 $RepoBaseUrl = "https://raw.githubusercontent.com/Buzigi/claude_installer/master"
 $IsRemoteExecution = [string]::IsNullOrEmpty($PSScriptRoot)
 
@@ -117,11 +115,11 @@ function Invoke-Step {
     try {
         Write-ColorOutput "Executing: $StepName..." Yellow
         & $ScriptBlock
-        Write-ColorOutput "✓ $StepName completed successfully" Green
+        Write-ColorOutput "[OK] $StepName completed successfully" Green
         return $true
     }
     catch {
-        Write-ColorOutput "✗ $StepName failed: $_" Red
+        Write-ColorOutput "[FAIL] $StepName failed: $_" Red
         return $false
     }
 }
@@ -268,7 +266,11 @@ function Initialize-ClaudeConfig {
         # Prompt for API key if not using env variable
         if (-not $ApiKey) {
             Write-ColorOutput "Enter your GLM5 API key (format: id.secret):" Yellow
-            $ApiKey = Read-Host -MaskInput
+            # Use -AsSecureString for PS 5.1 compat, then convert back to plain text
+            $SecureKey = Read-Host "API Key" -AsSecureString
+            $ApiKey = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+                [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureKey)
+            )
 
             if (-not $ApiKey) {
                 Write-ColorOutput "Warning: No API key provided. You'll need to configure it manually." Yellow
@@ -288,7 +290,7 @@ function Initialize-ClaudeConfig {
             try {
                 [System.Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', $ApiUrl, 'User')
                 [System.Environment]::SetEnvironmentVariable('ANTHROPIC_AUTH_TOKEN', $ApiKey, 'User')
-                Write-ColorOutput "✓ Environment variables set permanently (User level)" Green
+                Write-ColorOutput "[OK] Environment variables set permanently (User level)" Green
                 Write-ColorOutput "  Note: Restart all terminals/apps to use new variables" Yellow
             }
             catch {
@@ -1090,43 +1092,43 @@ function Test-Installation {
 
     # Test CLI
     if (Test-Command "claude") {
-        Write-ColorOutput "✓ Claude CLI available" Green
+        Write-ColorOutput "[OK] Claude CLI available" Green
         $TestsPassed++
     }
     else {
-        Write-ColorOutput "✗ Claude CLI not found" Red
+        Write-ColorOutput "[FAIL] Claude CLI not found" Red
         $TestsFailed++
     }
 
     # Test config
     if (Test-Path "$env:USERPROFILE\.claude\settings.json") {
-        Write-ColorOutput "✓ Configuration file exists" Green
+        Write-ColorOutput "[OK] Configuration file exists" Green
         $TestsPassed++
     }
     else {
-        Write-ColorOutput "✗ Configuration file missing" Red
+        Write-ColorOutput "[FAIL] Configuration file missing" Red
         $TestsFailed++
     }
 
     # Test skills
     if (Test-Path $SkillsPath) {
         $SkillCount = (Get-ChildItem -Path $SkillsPath -Directory).Count
-        Write-ColorOutput "✓ Skills installed ($SkillCount skills)" Green
+        Write-ColorOutput "[OK] Skills installed ($SkillCount skills)" Green
         $TestsPassed++
     }
     else {
-        Write-ColorOutput "✗ Skills directory missing" Red
+        Write-ColorOutput "[FAIL] Skills directory missing" Red
         $TestsFailed++
     }
 
     # Test agents
     if (Test-Path $AgentsPath) {
         $AgentCount = (Get-ChildItem -Path $AgentsPath -File -Filter "*.md").Count
-        Write-ColorOutput "✓ Agents installed ($AgentCount agents)" Green
+        Write-ColorOutput "[OK] Agents installed ($AgentCount agents)" Green
         $TestsPassed++
     }
     else {
-        Write-ColorOutput "✗ Agents directory missing" Red
+        Write-ColorOutput "[FAIL] Agents directory missing" Red
         $TestsFailed++
     }
 
@@ -1279,23 +1281,21 @@ function Start-Installation {
     else {
         Write-ColorOutput "`nInstallation completed with errors. Please review the output above." Yellow
     }
+
+    # Keep window open so user can read output
+    Write-Host ""
+    Read-Host "Press Enter to exit"
 }
 
-# Start installation with error handling that keeps the window open
+# Start installation
 try {
     Start-Installation
 }
 catch {
-    Write-Host "`n`nINSTALLATION ERROR: $_" -ForegroundColor Red
-    Write-Host $_.ScriptStackTrace -ForegroundColor DarkRed
-}
-finally {
-    # Keep window open so the user can read the output
-    if ($IsRemoteExecution) {
-        Write-Host "`n"
-        Write-Host "Press any key to continue..." -ForegroundColor Cyan
-        $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+    Write-Host "`nINSTALLATION ERROR: $_" -ForegroundColor Red
+    if ($_.ScriptStackTrace) {
+        Write-Host $_.ScriptStackTrace -ForegroundColor DarkRed
     }
+    Write-Host ""
+    Read-Host "Press Enter to exit"
 }
-
-#endregion

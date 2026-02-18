@@ -31,7 +31,7 @@ This installer automates the complete setup of Claude Code CLI with GLM5 model c
 
 **Windows (PowerShell) - Run as Administrator:**
 ```powershell
-irm https://raw.githubusercontent.com/Buzigi/claude_installer/master/Install-ClaudeCode.ps1 | iex
+$f="$env:TEMP\Install-ClaudeCode.ps1"; irm https://raw.githubusercontent.com/Buzigi/claude_installer/master/Install-ClaudeCode.ps1 -OutFile $f; & $f; Remove-Item $f -ErrorAction SilentlyContinue
 ```
 
 **Linux/macOS (Bash/Zsh):**
