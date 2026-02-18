@@ -326,7 +326,7 @@ Completely remove Claude Code from your system (CLI, config, env vars, PATH, cac
 
 *Windows (PowerShell):*
 ```powershell
-$f="$env:TEMP\Uninstall-ClaudeCode.ps1"; irm https://raw.githubusercontent.com/Buzigi/claude_installer/master/Uninstall-ClaudeCode.ps1 -OutFile $f; & $f; Remove-Item $f -ErrorAction SilentlyContinue
+$f="$env:TEMP\Uninstall-ClaudeCode.ps1"; irm "https://api.github.com/repos/Buzigi/claude_installer/contents/Uninstall-ClaudeCode.ps1" -Headers @{Accept="application/vnd.github.v3.raw"} -OutFile $f; & $f; Remove-Item $f -ErrorAction SilentlyContinue
 ```
 
 *Linux/macOS:*
