@@ -1,0 +1,153 @@
+name: Build and Deploy Installers
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy to VPS'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  ARTIFACT_DIR: artifacts
+
+jobs:
+  build:
+    name: Build Installers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        run: |
+          # Install PowerShell for running .ps1 scripts
+          sudo apt-get update
+          sudo apt-get install -y powershell
+
+      - name: Create artifact directory
+        run: mkdir -p ${{ env.ARTIFACT_DIR }}
+
+      - name: Embed API key into Windows installer
+        env:
+          Z_AI_API_KEY: ${{ secrets.Z_AI_API_KEY }}
+        run: |
+          if [ -z "$Z_AI_API_KEY" ]; then
+            echo "Warning: Z_AI_API_KEY not set, creating installer with placeholder"
+            cp Install-ClaudeCode.ps1 ${{ env.ARTIFACT_DIR }}/claude-installer-windows.ps1
+          else
+            chmod +x scripts/embed-api-key.sh
+            ./scripts/embed-api-key.sh \
+              --api-key "$Z_AI_API_KEY" \
+              --input Install-ClaudeCode.ps1 \
+              --output ${{ env.ARTIFACT_DIR }}/claude-installer-windows.ps1
+          fi
+
+      - name: Embed API key into Linux installer
+        env:
+          Z_AI_API_KEY: ${{ secrets.Z_AI_API_KEY }}
+        run: |
+          if [ -z "$Z_AI_API_KEY" ]; then
+            echo "Warning: Z_AI_API_KEY not set, creating installer with placeholder"
+            cp install-claude-code.sh ${{ env.ARTIFACT_DIR }}/claude-installer-linux.sh
+          else
+            chmod +x scripts/embed-api-key.sh
+            ./scripts/embed-api-key.sh \
+              --api-key "$Z_AI_API_KEY" \
+              --input install-claude-code.sh \
+              --output ${{ env.ARTIFACT_DIR }}/claude-installer-linux.sh
+          fi
+
+      - name: Create checksums
+        run: |
+          cd ${{ env.ARTIFACT_DIR }}
+          sha256sum claude-installer-windows.ps1 > claude-installer-windows.ps1.sha256
+          sha256sum claude-installer-linux.sh > claude-installer-linux.sh.sha256
+          echo "Checksums:"
+          cat *.sha256
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-installers
+          path: ${{ env.ARTIFACT_DIR }}/
+          retention-days: 30
+
+  deploy:
+    name: Deploy to VPS
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.deploy != 'false'
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: claude-installers
+          path: ${{ env.ARTIFACT_DIR }}
+
+      - name: Setup SSH key
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/deploy_key
+          # Add host to known hosts to avoid interactive prompt
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Deploy to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+        run: |
+          echo "Deploying installers to VPS..."
+
+          # Create target directory if it doesn't exist
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key \
+            "${VPS_USER}@${VPS_HOST}" \
+            "mkdir -p ${VPS_DEPLOY_PATH}"
+
+          # Copy files to VPS
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key \
+            ${{ env.ARTIFACT_DIR }}/claude-installer-windows.ps1 \
+            ${{ env.ARTIFACT_DIR }}/claude-installer-linux.sh \
+            ${{ env.ARTIFACT_DIR }}/*.sha256 \
+            "${VPS_USER}@${VPS_HOST}:${VPS_DEPLOY_PATH}/"
+
+          echo "[OK] Deployment complete"
+          echo "Files deployed to: ${VPS_DEPLOY_PATH}"
+
+      - name: Cleanup SSH
+        if: always()
+        run: |
+          rm -f ~/.ssh/deploy_key
+
+  notify:
+    name: Notify on Success
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    if: success() && github.event_name == 'push'
+
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Windows Installer**: claude-installer-windows.ps1" >> $GITHUB_STEP_SUMMARY
+          echo "- **Linux Installer**: claude-installer-linux.sh" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Deployed to: \`${{ secrets.VPS_DEPLOY_PATH }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Download URLs (after VPS sync):" >> $GITHUB_STEP_SUMMARY
+          echo "- https://claude.buzigi.com/downloads/claude-installer-windows.ps1" >> $GITHUB_STEP_SUMMARY
+          echo "- https://claude.buzigi.com/downloads/claude-installer-linux.sh" >> $GITHUB_STEP_SUMMARY
