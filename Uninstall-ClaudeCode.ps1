@@ -160,7 +160,7 @@ function Remove-ClaudeConfig {
     }
 
     if ($removed) {
-        Write-ColorOutput "[OK] Claude configuration removed (backup saved)" Green
+        Write-ColorOutput '[OK] Claude configuration removed (backup saved)' Green
     }
     else {
         Write-ColorOutput "[SKIP] No Claude configuration found" Yellow
@@ -268,7 +268,7 @@ function Remove-NodeModulesCache {
     .SYNOPSIS
         Remove Claude-related npm cache entries
     #>
-    Write-ColorOutput "Cleaning npm cache (Claude packages)..." Yellow
+    Write-ColorOutput 'Cleaning npm cache (Claude packages)...' Yellow
 
     if (Test-Command "npm") {
         $cacheDir = (npm config get cache 2>$null)
@@ -298,24 +298,24 @@ function Remove-NodeModulesCache {
 #region Main
 
 function Start-Uninstall {
-    Write-ColorOutput "╔═══════════════════════════════════════════════════════════════╗" Red
-    Write-ColorOutput "║          Claude Code Uninstaller (Windows)                    ║" Red
-    Write-ColorOutput "╚═══════════════════════════════════════════════════════════════╝" Red
+    Write-ColorOutput '+===============================================================+' Red
+    Write-ColorOutput '|          Claude Code Uninstaller - Windows                    |' Red
+    Write-ColorOutput '+===============================================================+' Red
     Write-Host ""
 
     Write-ColorOutput "This will remove the following:" Yellow
-    Write-Host "  - Claude Code CLI (native binary and/or npm package)"
+    Write-Host '  - Claude Code CLI (native binary and/or npm package)'
     if (-not $KeepConfig) {
-        Write-Host "  - Configuration directory (~/.claude)"
-        Write-Host "  - MCP configuration (~/.claude.json)"
+        Write-Host '  - Configuration directory (~/.claude)'
+        Write-Host '  - MCP configuration (~/.claude.json)'
         Write-Host "  - Skills, agents, and hooks"
     }
     if (-not $KeepEnvVars) {
         Write-Host "  - ANTHROPIC_* environment variables"
     }
-    Write-Host "  - PATH entries (~/.local/bin)"
+    Write-Host '  - PATH entries (~/.local/bin)'
     Write-Host "  - PowerShell profile entries"
-    Write-Host "  - npm/npx cache (Claude packages)"
+    Write-Host '  - npm/npx cache (Claude packages)'
     Write-Host ""
 
     if (-not (Confirm-Action "Are you sure you want to uninstall Claude Code?")) {
@@ -369,9 +369,9 @@ function Start-Uninstall {
 
     # Summary
     Write-Host ""
-    Write-ColorOutput "╔═══════════════════════════════════════════════════════════════╗" Green
-    Write-ColorOutput "║          Uninstall Complete                                   ║" Green
-    Write-ColorOutput "╚═══════════════════════════════════════════════════════════════╝" Green
+    Write-ColorOutput '+===============================================================+' Green
+    Write-ColorOutput '|          Uninstall Complete                                   |' Green
+    Write-ColorOutput '+===============================================================+' Green
     Write-Host ""
     Write-ColorOutput "Claude Code has been removed from this system." Green
 
