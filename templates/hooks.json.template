@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "enabled": true,
   "hooks": {
-    "user-prompt-submit": {
+    "Notification": {
       "enabled": true,
       "handler": "agent-orchestrator",
       "config": {
@@ -23,7 +23,7 @@
         "requireApprovalForDirect": true
       }
     },
-    "pre-tool": {
+    "PreToolUse": {
       "enabled": true,
       "handler": "delete-protector",
       "config": {
@@ -53,7 +53,7 @@
         "backupLocation": "~/.claude/backups"
       }
     },
-    "post-tool": {
+    "PostToolUse": {
       "enabled": true,
       "handler": "operation-logger",
       "config": {
@@ -64,7 +64,7 @@
         "includeToolResult": true
       }
     },
-    "agent-complete": {
+    "Stop": {
       "enabled": true,
       "handler": "agent-coordinator",
       "config": {

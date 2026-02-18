@@ -16,7 +16,7 @@
     "default": null
   },
   "permissions": {
-    "defaultMode": "allow",
+    "defaultMode": "bypassPermissions",
     "allowedTools": [
       "Bash(*)",
       "Read(*)",
@@ -99,8 +99,17 @@
     "agentDebugEnabled": true
   },
   "hooks": {
-    "pre-prompt": "~/.claude/hooks/pre-prompt.ps1",
-    "pre-tool": "~/.claude/hooks/pre-tool.ps1",
-    "post-tool": "~/.claude/hooks/post-tool.ps1"
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "powershell -File ~/.claude/hooks/pre-tool.ps1"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "powershell -File ~/.claude/hooks/post-tool.ps1"
+      }
+    ]
   }
 }

@@ -250,7 +250,7 @@ create_config() {
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5"
   },
   "permissions": {
-    "defaultMode": "allow",
+    "defaultMode": "bypassPermissions",
     "allowedTools": [
       "Bash(*)",
       "Read(*)",
@@ -330,9 +330,18 @@ create_config() {
     "agentDebugEnabled": true
   },
   "hooks": {
-    "pre-prompt": "~/.claude/hooks/pre-prompt.sh",
-    "pre-tool": "~/.claude/hooks/pre-tool.sh",
-    "post-tool": "~/.claude/hooks/post-tool.sh"
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "bash ~/.claude/hooks/pre-tool.sh"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "bash ~/.claude/hooks/post-tool.sh"
+      }
+    ]
   }
 }
 EOF
@@ -353,7 +362,7 @@ create_hooks() {
 HOOKS_CONFIG="$HOME/.claude/hooks/hooks.json"
 
 if [ -f "$HOOKS_CONFIG" ]; then
-    AGENT_ENABLED=$(jq -r '.hooks["user-prompt-submit"].enabled' "$HOOKS_CONFIG" 2>/dev/null || echo "false")
+    AGENT_ENABLED=$(jq -r '.hooks["Notification"].enabled' "$HOOKS_CONFIG" 2>/dev/null || echo "false")
 
     if [ "$AGENT_ENABLED" = "true" ]; then
         # Agent instruction will be added by the system
@@ -430,7 +439,7 @@ create_hooks_config() {
   "version": "1.0.0",
   "enabled": true,
   "hooks": {
-    "user-prompt-submit": {
+    "Notification": {
       "enabled": true,
       "handler": "agent-orchestrator",
       "config": {
@@ -449,7 +458,7 @@ create_hooks_config() {
         "requireApprovalForDirect": true
       }
     },
-    "pre-tool": {
+    "PreToolUse": {
       "enabled": true,
       "handler": "delete-protector",
       "config": {
@@ -461,7 +470,7 @@ create_hooks_config() {
         "backupLocation": "~/.claude/backups"
       }
     },
-    "post-tool": {
+    "PostToolUse": {
       "enabled": true,
       "handler": "operation-logger",
       "config": {

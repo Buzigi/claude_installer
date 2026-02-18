@@ -331,7 +331,7 @@ function Initialize-ClaudeConfig {
             ANTHROPIC_DEFAULT_OPUS_MODEL = "glm-5"
         }
         permissions = @{
-            defaultMode = "allow"
+            defaultMode = "bypassPermissions"
             allowedTools = @(
                 "Bash(*)",
                 "Read(*)",
@@ -414,9 +414,18 @@ function Initialize-ClaudeConfig {
             agentDebugEnabled = $true
         }
         hooks = @{
-            "pre-prompt" = "~/.claude/hooks/pre-prompt.ps1"
-            "pre-tool" = "~/.claude/hooks/pre-tool.ps1"
-            "post-tool" = "~/.claude/hooks/post-tool.ps1"
+            "PreToolUse" = @(
+                @{
+                    type = "command"
+                    command = "powershell -File ~/.claude/hooks/pre-tool.ps1"
+                }
+            )
+            "PostToolUse" = @(
+                @{
+                    type = "command"
+                    command = "powershell -File ~/.claude/hooks/post-tool.ps1"
+                }
+            )
         }
     } | ConvertTo-Json -Depth 10
 
@@ -426,7 +435,7 @@ function Initialize-ClaudeConfig {
     # Create settings.local.json
     $LocalSettingsConfig = @{
         permissions = @{
-            defaultMode = "allow"
+            defaultMode = "bypassPermissions"
             allowedTools = @(
                 "Bash(dir:*)",
                 "Bash(move:*)",
@@ -816,7 +825,7 @@ function Install-Hooks {
         version = "1.0.0"
         enabled = $true
         hooks = @{
-            'user-prompt-submit' = @{
+            'Notification' = @{
                 enabled = $true
                 handler = "agent-orchestrator"
                 config = @{
@@ -835,7 +844,7 @@ function Install-Hooks {
                     requireApprovalForDirect = $true
                 }
             }
-            'pre-tool' = @{
+            'PreToolUse' = @{
                 enabled = $true
                 handler = "delete-protector"
                 config = @{
@@ -847,7 +856,7 @@ function Install-Hooks {
                     backupLocation = "~/.claude/backups"
                 }
             }
-            'post-tool' = @{
+            'PostToolUse' = @{
                 enabled = $true
                 handler = "operation-logger"
                 config = @{
@@ -858,7 +867,7 @@ function Install-Hooks {
                     includeToolResult = $true
                 }
             }
-            'agent-complete' = @{
+            'Stop' = @{
                 enabled = $true
                 handler = "agent-coordinator"
                 config = @{
@@ -917,7 +926,7 @@ param(
 $HookConfigPath = "$env:USERPROFILE\.claude\hooks\hooks.json"
 if (Test-Path $HookConfigPath) {
     $HookConfig = Get-Content $HookConfigPath -Raw | ConvertFrom-Json
-    $AgentOrchestrator = $HookConfig.hooks.'user-prompt-submit'
+    $AgentOrchestrator = $HookConfig.hooks.'Notification'
 
     if ($AgentOrchestrator.enabled -and $AgentOrchestrator.config.forceAgentUsage) {
         # Add agent delegation instruction to the prompt
@@ -964,7 +973,7 @@ if (-not (Test-Path $HookConfigPath)) {
 }
 
 $HookConfig = Get-Content $HookConfigPath -Raw | ConvertFrom-Json
-$DeleteProtector = $HookConfig.hooks.'pre-tool'
+$DeleteProtector = $HookConfig.hooks.'PreToolUse'
 
 if (-not $DeleteProtector.enabled) {
     return @{ allow = $true }
@@ -1066,7 +1075,7 @@ if (-not (Test-Path $HookConfigPath)) {
 }
 
 $HookConfig = Get-Content $HookConfigPath -Raw | ConvertFrom-Json
-$OperationLogger = $HookConfig.hooks.'post-tool'
+$OperationLogger = $HookConfig.hooks.'PostToolUse'
 
 if (-not $OperationLogger.enabled) {
     return

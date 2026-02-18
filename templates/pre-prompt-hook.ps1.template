@@ -12,7 +12,7 @@ param(
 $HookConfigPath = "$env:USERPROFILE\.claude\hooks.json"
 if (Test-Path $HookConfigPath) {
     $HookConfig = Get-Content $HookConfigPath -Raw | ConvertFrom-Json
-    $AgentOrchestrator = $HookConfig.hooks.'user-prompt-submit'
+    $AgentOrchestrator = $HookConfig.hooks.'Notification'
 
     if ($AgentOrchestrator.enabled -and $AgentOrchestrator.config.forceAgentUsage) {
         # Add agent delegation instruction to the prompt

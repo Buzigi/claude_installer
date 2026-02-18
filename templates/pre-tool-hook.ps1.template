@@ -18,7 +18,7 @@ if (-not (Test-Path $HookConfigPath)) {
 }
 
 $HookConfig = Get-Content $HookConfigPath -Raw | ConvertFrom-Json
-$DeleteProtector = $HookConfig.hooks.'pre-tool'
+$DeleteProtector = $HookConfig.hooks.'PreToolUse'
 
 if (-not $DeleteProtector.enabled) {
     return @{ allow = $true }
