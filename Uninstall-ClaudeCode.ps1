@@ -336,7 +336,7 @@ function Start-Uninstall {
     $CurrentStep++
     Write-Step -Message "Removing Configuration" -StepNumber $CurrentStep -TotalSteps $TotalSteps
     if ($KeepConfig) {
-        Write-ColorOutput "[SKIP] Keeping configuration (--KeepConfig)" Yellow
+        Write-ColorOutput '[SKIP] Keeping configuration (-KeepConfig)' Yellow
     }
     else {
         Remove-ClaudeConfig
@@ -346,7 +346,7 @@ function Start-Uninstall {
     $CurrentStep++
     Write-Step -Message "Removing Environment Variables" -StepNumber $CurrentStep -TotalSteps $TotalSteps
     if ($KeepEnvVars) {
-        Write-ColorOutput "[SKIP] Keeping environment variables (--KeepEnvVars)" Yellow
+        Write-ColorOutput '[SKIP] Keeping environment variables (-KeepEnvVars)' Yellow
     }
     else {
         Remove-EnvironmentVariables
