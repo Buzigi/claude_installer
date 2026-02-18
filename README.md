@@ -93,6 +93,8 @@ SHELL=/bin/zsh ./install-claude-code.sh
 claude-installer/
 ├── Install-ClaudeCode.ps1          # Windows installation script
 ├── install-claude-code.sh           # Linux/macOS installation script
+├── Uninstall-ClaudeCode.ps1        # Windows uninstall script
+├── uninstall-claude-code.sh         # Linux/macOS uninstall script
 ├── config/
 │   ├── glm5-config.json            # GLM5 model configuration
 │   ├── skills-repository.json      # Skills manifest
@@ -318,9 +320,42 @@ See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues and solution
 
 ### Uninstall
 
+Completely remove Claude Code from your system (CLI, config, env vars, PATH, caches).
+
+**One-Liner Uninstall (No Clone Required):**
+
+*Windows (PowerShell):*
+```powershell
+$f="$env:TEMP\Uninstall-ClaudeCode.ps1"; irm https://raw.githubusercontent.com/Buzigi/claude_installer/master/Uninstall-ClaudeCode.ps1 -OutFile $f; & $f; Remove-Item $f -ErrorAction SilentlyContinue
+```
+
+*Linux/macOS:*
+```bash
+curl -fsSL https://raw.githubusercontent.com/Buzigi/claude_installer/master/uninstall-claude-code.sh | bash
+```
+
+**From Cloned Repo:**
+
+*Windows:*
 ```powershell
 .\Uninstall-ClaudeCode.ps1
 ```
+
+*Linux/macOS:*
+```bash
+chmod +x uninstall-claude-code.sh
+./uninstall-claude-code.sh
+```
+
+**Options:**
+
+| Flag | PowerShell | Bash | Description |
+|------|-----------|------|-------------|
+| Keep config | `-KeepConfig` | `--keep-config` | Remove CLI only, keep `~/.claude` |
+| Keep env vars | `-KeepEnvVars` | `--keep-env` | Keep `ANTHROPIC_*` environment variables |
+| Skip prompts | `-Force` | `--force` / `-f` | No confirmation prompts |
+
+A backup of your configuration is automatically saved before removal.
 
 ## Contributing
 
