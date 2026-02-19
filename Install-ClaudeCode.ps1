@@ -48,18 +48,8 @@ param(
 
     [switch]$SkipCLI = $false,
 
-    [switch]$IncludeMCP = $true,
-
-    # Internal flag for embedded API key (set by CI builds)
-    [bool]$Embedded = $false
+    [switch]$IncludeMCP = $true
 )
-
-# Embedded API key placeholder (replaced by CI build process)
-# DO NOT modify this line manually - it's replaced by scripts/embed-api-key.ps1
-$script:EmbeddedApiKey = "__EMBEDDED_API_KEY_PLACEHOLDER__"
-
-# Flag to skip CLI install (set by menu choice "Reconfigure only")
-$script:SkipCLIInstall = $false
 
 # GitHub repo base URL for remote execution
 $RepoBaseUrl = "https://raw.githubusercontent.com/Buzigi/claude_installer/master"
@@ -212,108 +202,57 @@ function Install-ClaudeCLI {
         $CurrentVersion = & claude --version 2>&1
         Write-ColorOutput "Claude CLI already installed: $CurrentVersion" Green
 
-        # Skip menu if running in embedded mode or SkipCLI is set
-        if ($Embedded -or $SkipCLI) {
-            Write-ColorOutput "Skipping installation menu (embedded/skip mode)" Yellow
-            return
-        }
-
-        # Show installation options menu
-        Write-Host ""
-        Write-ColorOutput "What would you like to do?" Cyan
-        Write-Host "  [1] Update existing installation"
-        Write-Host "  [2] Uninstall and reinstall fresh"
-        Write-Host "  [3] Reconfigure only (keep CLI, update config)"
-        Write-Host "  [4] Cancel"
-        Write-Host ""
-
-        $Choice = Read-Host "Select option (1-4)"
-
-        switch ($Choice) {
-            '1' {
-                Write-ColorOutput "Updating Claude CLI..." Yellow
-                & claude update
-                Write-ColorOutput "Claude CLI updated" Green
-            }
-            '2' {
-                Write-ColorOutput "Uninstalling Claude CLI..." Yellow
-                & claude uninstall 2>$null
-                # Also try npm uninstall as fallback
-                if (Test-Command "npm") {
-                    npm uninstall -g @anthropic-ai/claude-code 2>$null
-                }
-                Write-ColorOutput "Proceeding with fresh installation..." Yellow
-                # Fall through to fresh install
-                Install-ClaudeCLIFresh
-            }
-            '3' {
-                Write-ColorOutput "Keeping existing CLI, will update configuration only" Yellow
-                $script:SkipCLIInstall = $true
-            }
-            '4' {
-                Write-ColorOutput "Installation cancelled" Yellow
-                exit 0
-            }
-            default {
-                Write-ColorOutput "Invalid option. Proceeding with update..." Yellow
-                & claude update
-            }
+        $Update = Read-Host "Update to latest version? (y/N)"
+        if ($Update -eq 'y' -or $Update -eq 'Y') {
+            Write-ColorOutput "Updating Claude CLI..." Yellow
+            & claude update
         }
     }
     else {
-        Install-ClaudeCLIFresh
-    }
-}
+        Write-ColorOutput "Installing Claude CLI via native installer (recommended)..." Yellow
+        Write-ColorOutput "Running: irm https://claude.ai/install.ps1 | iex" Cyan
 
-function Install-ClaudeCLIFresh {
-    <#
-    .SYNOPSIS
-        Perform fresh installation of Claude CLI
-    #>
-    Write-ColorOutput "Installing Claude CLI via native installer (recommended)..." Yellow
-    Write-ColorOutput "Running: irm https://claude.ai/install.ps1 | iex" Cyan
+        try {
+            # Use the official native installer (npm installation is deprecated)
+            $installScript = Invoke-RestMethod -Uri "https://claude.ai/install.ps1"
+            Invoke-Command -ScriptBlock ([scriptblock]::Create($installScript))
 
-    try {
-        # Use the official native installer (npm installation is deprecated)
-        $installScript = Invoke-RestMethod -Uri "https://claude.ai/install.ps1"
-        Invoke-Command -ScriptBlock ([scriptblock]::Create($installScript))
+            # Refresh PATH so the current session can find the newly installed binary
+            $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+            $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+            $env:Path = "$machinePath;$userPath"
 
-        # Refresh PATH so the current session can find the newly installed binary
-        $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
-        $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-        $env:Path = "$machinePath;$userPath"
+            # Also add the common install location explicitly if not already present
+            $localBin = Join-Path $env:USERPROFILE ".local\bin"
+            if ((Test-Path $localBin) -and ($env:Path -notlike "*$localBin*")) {
+                $env:Path = "$localBin;$env:Path"
+            }
 
-        # Also add the common install location explicitly if not already present
-        $localBin = Join-Path $env:USERPROFILE ".local\bin"
-        if ((Test-Path $localBin) -and ($env:Path -notlike "*$localBin*")) {
-            $env:Path = "$localBin;$env:Path"
-        }
-
-        # Persist ~/.local/bin to User PATH so it survives new sessions
-        if ((Test-Path $localBin)) {
-            $persistentUserPath = [Environment]::GetEnvironmentVariable("Path", "User")
-            if (-not $persistentUserPath -or $persistentUserPath -notlike "*$localBin*") {
-                if ($persistentUserPath) {
-                    [Environment]::SetEnvironmentVariable("Path", "$localBin;$persistentUserPath", "User")
+            # Persist ~/.local/bin to User PATH so it survives new sessions
+            if ((Test-Path $localBin)) {
+                $persistentUserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+                if (-not $persistentUserPath -or $persistentUserPath -notlike "*$localBin*") {
+                    if ($persistentUserPath) {
+                        [Environment]::SetEnvironmentVariable("Path", "$localBin;$persistentUserPath", "User")
+                    }
+                    else {
+                        [Environment]::SetEnvironmentVariable("Path", $localBin, "User")
+                    }
+                    Write-ColorOutput "Added $localBin to persistent User PATH" Green
                 }
-                else {
-                    [Environment]::SetEnvironmentVariable("Path", $localBin, "User")
-                }
-                Write-ColorOutput "Added $localBin to persistent User PATH" Green
-            }
 
-            # Also add to PowerShell profile for extra reliability
-            $profileDir = Split-Path $PROFILE -Parent
-            if (-not (Test-Path $profileDir)) {
-                New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
-            }
-            if (-not (Test-Path $PROFILE)) {
-                New-Item -ItemType File -Path $PROFILE -Force | Out-Null
-            }
-            $profileContent = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
-            $pathSnippet = '# Claude Code CLI - ensure ~/.local/bin is in PATH'
-            if (-not $profileContent -or $profileContent -notlike "*$pathSnippet*") {
-                $profileBlock = @"
+                # Also add to PowerShell profile for extra reliability
+                $profileDir = Split-Path $PROFILE -Parent
+                if (-not (Test-Path $profileDir)) {
+                    New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
+                }
+                if (-not (Test-Path $PROFILE)) {
+                    New-Item -ItemType File -Path $PROFILE -Force | Out-Null
+                }
+                $profileContent = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
+                $pathSnippet = '# Claude Code CLI - ensure ~/.local/bin is in PATH'
+                if (-not $profileContent -or $profileContent -notlike "*$pathSnippet*") {
+                    $profileBlock = @"
 
 $pathSnippet
 `$localBin = Join-Path `$env:USERPROFILE ".local\bin"
@@ -321,25 +260,26 @@ if ((Test-Path `$localBin) -and (`$env:Path -notlike "*`$localBin*")) {
     `$env:Path = "`$localBin;`$env:Path"
 }
 "@
-                Add-Content -Path $PROFILE -Value $profileBlock
-                Write-ColorOutput "Added PATH entry to PowerShell profile: $PROFILE" Green
+                    Add-Content -Path $PROFILE -Value $profileBlock
+                    Write-ColorOutput "Added PATH entry to PowerShell profile: $PROFILE" Green
+                }
+            }
+
+            if (Test-Command "claude") {
+                Write-ColorOutput "Claude CLI installed successfully" Green
+            }
+            else {
+                throw "Claude CLI binary not found after installation. Check that the installer completed correctly."
             }
         }
-
-        if (Test-Command "claude") {
-            Write-ColorOutput "Claude CLI installed successfully" Green
+        catch {
+            Write-ColorOutput "Native installer failed, trying npm fallback (deprecated)..." Yellow
+            if (-not (Test-Command "npm")) {
+                throw "npm is not installed. Please install Node.js from https://nodejs.org/ or fix network issues"
+            }
+            npm install -g @anthropic-ai/claude-code
+            Write-ColorOutput "Claude CLI installed via npm (deprecated method)" Green
         }
-        else {
-            throw "Claude CLI binary not found after installation. Check that the installer completed correctly."
-        }
-    }
-    catch {
-        Write-ColorOutput "Native installer failed, trying npm fallback (deprecated)..." Yellow
-        if (-not (Test-Command "npm")) {
-            throw "npm is not installed. Please install Node.js from https://nodejs.org/ or fix network issues"
-        }
-        npm install -g @anthropic-ai/claude-code
-        Write-ColorOutput "Claude CLI installed via npm (deprecated method)" Green
     }
 }
 
@@ -367,21 +307,17 @@ function Initialize-ClaudeConfig {
         Write-ColorOutput "GLM5 is accessed via Zhipu AI proxy: $ApiUrl" Cyan
         Write-Host ""
 
-        # Check if using embedded API key (CI builds)
-        if ($Embedded -and $script:EmbeddedApiKey -ne "__EMBEDDED_API_KEY_PLACEHOLDER__") {
-            Write-ColorOutput "Using embedded API key from installer" Green
-            $ApiKey = $script:EmbeddedApiKey
-        }
         # Check if API key is already in environment
-        elseif ($env:ANTHROPIC_AUTH_TOKEN) {
+        $EnvKey = $env:ANTHROPIC_AUTH_TOKEN
+        if ($EnvKey) {
             Write-ColorOutput "Found API key in ANTHROPIC_AUTH_TOKEN environment variable" Green
             $UseEnvKey = Read-Host "Use existing environment variable key? (Y/n)"
             if ($UseEnvKey -ne 'n' -and $UseEnvKey -ne 'N') {
-                $ApiKey = $env:ANTHROPIC_AUTH_TOKEN
+                $ApiKey = $EnvKey
             }
         }
 
-        # Prompt for API key if not set
+        # Prompt for API key if not using env variable
         if (-not $ApiKey) {
             Write-ColorOutput "Enter your GLM5 API key (format: id.secret):" Yellow
             # Use -AsSecureString for PS 5.1 compat, then convert back to plain text
@@ -396,14 +332,9 @@ function Initialize-ClaudeConfig {
             }
         }
 
-        # Ask about setting environment variables (skip if embedded)
+        # Ask about setting environment variables
         Write-Host ""
-        if ($Embedded) {
-            Write-ColorOutput "Setting environment variables automatically (embedded mode)" Green
-            $SetEnvVars = 'Y'
-        } else {
-            $SetEnvVars = Read-Host "Set GLM5 environment variables permanently? (Y/n)"
-        }
+        $SetEnvVars = Read-Host "Set GLM5 environment variables permanently? (Y/n)"
         if ($SetEnvVars -ne 'n' -and $SetEnvVars -ne 'N') {
             # Set for current session
             $env:ANTHROPIC_BASE_URL = $ApiUrl
@@ -1369,7 +1300,6 @@ function Start-Installation {
     Write-Host "  Skills Path: $SkillsPath"
     Write-Host "  Agents Path: $AgentsPath"
     Write-Host "  Include MCP: $IncludeMCP"
-    Write-Host "  Embedded Mode: $Embedded"
     Write-Host "`n"
 
     $Confirm = Read-Host "Proceed with installation? (Y/n)"
@@ -1381,18 +1311,14 @@ function Start-Installation {
     # Step 1: Install CLI
     $CurrentStep++
     Write-Step -Message "Installing Claude Code CLI" -StepNumber $CurrentStep -TotalSteps $TotalSteps
-    if (-not $SkipCLI -and -not $script:SkipCLIInstall) {
+    if (-not $SkipCLI) {
         if (-not (Invoke-Step -StepName "CLI Installation" -ScriptBlock ${function:Install-ClaudeCLI})) {
             Write-ColorOutput "CLI installation failed. Aborting." Red
             return
         }
     }
     else {
-        if ($script:SkipCLIInstall) {
-            Write-ColorOutput "Skipping CLI installation (reconfigure only)" Yellow
-        } else {
-            Write-ColorOutput "Skipping CLI installation (as requested)" Yellow
-        }
+        Write-ColorOutput "Skipping CLI installation (as requested)" Yellow
     }
 
     # Step 2: Initialize Configuration

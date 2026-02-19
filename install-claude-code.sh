@@ -4,26 +4,12 @@
 
 set -e
 
-# Embedded API key placeholder (replaced by CI build process)
-# DO NOT modify this line manually - it's replaced by scripts/embed-api-key.sh
-EMBEDDED_API_KEY="__EMBEDDED_API_KEY_PLACEHOLDER__"
-
-# Flag for embedded mode (set to true by build process)
-EMBEDDED=false
-
-# Flag to skip CLI install (set by menu choice "Reconfigure only")
-SKIP_CLI_INSTALL=false
-
 # Parse command line arguments
 ASSUME_YES=false
 for arg in "$@"; do
     case $arg in
         -y|--yes|--assume-yes)
             ASSUME_YES=true
-            shift
-            ;;
-        --embedded)
-            EMBEDDED=true
             shift
             ;;
     esac
@@ -61,7 +47,6 @@ show_usage() {
     echo ""
     echo "Options:"
     echo "  -y, --yes, --assume-yes    Run non-interactively, accept all defaults"
-    echo "  --embedded                 Use embedded API key (for CI builds)"
     echo "  -h, --help                 Show this help message"
     echo ""
     echo "Environment Variables:"
@@ -214,80 +199,27 @@ install_claude_cli() {
         local current_version=$(claude --version 2>&1 || echo "unknown")
         print_success "Claude CLI already installed: $current_version"
 
-        # Skip menu if running in embedded mode
-        if [ "$EMBEDDED" = true ]; then
-            print_info "Skipping installation menu (embedded mode)"
-            SKIP_CLI_INSTALL=false
-            return
+        if prompt_yes_no "Update to latest version?" "N"; then
+            print_info "Updating Claude CLI..."
+            claude update
+            print_success "Claude CLI updated"
         fi
-
-        # Show installation options menu
-        echo ""
-        print_info "What would you like to do?"
-        echo "  [1] Update existing installation"
-        echo "  [2] Uninstall and reinstall fresh"
-        echo "  [3] Reconfigure only (keep CLI, update config)"
-        echo "  [4] Cancel"
-        echo ""
-
-        local choice
-        if [ "$ASSUME_YES" = true ]; then
-            choice="1"
-            print_info "Auto-selecting option 1 (Update) in non-interactive mode"
-        else
-            read -p "Select option (1-4): " choice
-        fi
-
-        case $choice in
-            1)
-                print_info "Updating Claude CLI..."
-                claude update
-                print_success "Claude CLI updated"
-                SKIP_CLI_INSTALL=false
-                ;;
-            2)
-                print_info "Uninstalling Claude CLI..."
-                claude uninstall 2>/dev/null || true
-                print_info "Proceeding with fresh installation..."
-                install_claude_cli_fresh
-                SKIP_CLI_INSTALL=false
-                ;;
-            3)
-                print_info "Keeping existing CLI, will update configuration only"
-                SKIP_CLI_INSTALL=true
-                ;;
-            4)
-                print_info "Installation cancelled"
-                exit 0
-                ;;
-            *)
-                print_warning "Invalid option. Proceeding with update..."
-                claude update
-                SKIP_CLI_INSTALL=false
-                ;;
-        esac
     else
-        SKIP_CLI_INSTALL=false
-        install_claude_cli_fresh
-    fi
-}
+        print_info "Installing Claude CLI via native installer (recommended)..."
+        print_info "Running: curl -fsSL https://claude.ai/install.sh | bash"
 
-# Fresh installation of Claude CLI
-install_claude_cli_fresh() {
-    print_info "Installing Claude CLI via native installer (recommended)..."
-    print_info "Running: curl -fsSL https://claude.ai/install.sh | bash"
-
-    # Use the official native installer (npm installation is deprecated)
-    if curl -fsSL https://claude.ai/install.sh | bash; then
-        print_success "Claude CLI installed via native installer"
-    else
-        print_warning "Native installer failed, trying npm fallback (deprecated)..."
-        if check_command npm; then
-            npm install -g @anthropic-ai/claude-code
-            print_success "Claude CLI installed via npm (deprecated method)"
+        # Use the official native installer (npm installation is deprecated)
+        if curl -fsSL https://claude.ai/install.sh | bash; then
+            print_success "Claude CLI installed via native installer"
         else
-            print_error "npm not found. Please install Node.js or fix network issues"
-            exit 1
+            print_warning "Native installer failed, trying npm fallback (deprecated)..."
+            if check_command npm; then
+                npm install -g @anthropic-ai/claude-code
+                print_success "Claude CLI installed via npm (deprecated method)"
+            else
+                print_error "npm not found. Please install Node.js or fix network issues"
+                exit 1
+            fi
         fi
     fi
 }
@@ -299,19 +231,15 @@ configure_glm5_api() {
     local api_url="https://api.z.ai/api/anthropic"
     local api_key=""
 
-    # Check if using embedded API key (CI builds)
-    if [ "$EMBEDDED" = true ] && [ "$EMBEDDED_API_KEY" != "__EMBEDDED_API_KEY_PLACEHOLDER__" ]; then
-        print_success "Using embedded API key from installer"
-        api_key="$EMBEDDED_API_KEY"
     # Check for existing env vars
-    elif [ -n "$ANTHROPIC_AUTH_TOKEN" ]; then
+    if [ -n "$ANTHROPIC_AUTH_TOKEN" ]; then
         print_success "Found API key in ANTHROPIC_AUTH_TOKEN"
         if prompt_yes_no "Use existing API key?" "Y"; then
             api_key="$ANTHROPIC_AUTH_TOKEN"
         fi
     fi
 
-    # Prompt for API key if not set
+    # Prompt for API key if not using existing
     if [ -z "$api_key" ]; then
         echo ""
         print_info "GLM5 API Configuration"
@@ -333,20 +261,9 @@ configure_glm5_api() {
         fi
     fi
 
-    # Set environment variables permanently (skip prompt if embedded)
+    # Set environment variables permanently
     echo ""
-    local set_permanently="Y"
-    if [ "$EMBEDDED" = true ]; then
-        print_info "Setting environment variables automatically (embedded mode)"
-    else
-        if prompt_yes_no "Set GLM5 environment variables permanently?" "Y"; then
-            set_permanently="Y"
-        else
-            set_permanently="N"
-        fi
-    fi
-
-    if [ "$set_permanently" = "Y" ] || [ "$EMBEDDED" = true ]; then
+    if prompt_yes_no "Set GLM5 environment variables permanently?" "Y"; then
         # Determine shell and add to appropriate rc file
         local env_export=""
         local fish_syntax=""
@@ -778,7 +695,6 @@ main() {
     echo "  Model: $MODEL"
     echo "  Config Dir: $CONFIG_DIR"
     echo "  Shell Config: $SHELL_RC"
-    echo "  Embedded Mode: $EMBEDDED"
     echo ""
 
     if ! prompt_yes_no "Continue with installation?" "Y"; then
@@ -787,15 +703,7 @@ main() {
     fi
 
     check_prerequisites
-
-    # Only install CLI if not skipped
-    if [ "$SKIP_CLI_INSTALL" = false ]; then
-        install_claude_cli
-    else
-        print_step 2 8 "Skipping CLI Installation (Reconfigure Only)"
-        print_info "Keeping existing CLI installation"
-    fi
-
+    install_claude_cli
     configure_glm5_api
     create_config
     create_hooks
