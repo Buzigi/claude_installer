@@ -1,0 +1,156 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  release:
+    types: [published]
+
+jobs:
+  validate:
+    name: Validate Scripts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate PowerShell Syntax
+        run: |
+          # Install PowerShell
+          sudo apt-get update
+          sudo apt-get install -y powershell
+
+          # Check syntax of all PS1 files
+          pwsh -Command "
+            Get-ChildItem -Filter '*.ps1' -Recurse | ForEach-Object {
+              try {
+                \$null = [System.Management.Automation.PSParser]::Tokenize((Get-Content \$_.FullName -Raw), [ref]\$null)
+                Write-Host '✓' \$_.Name
+              } catch {
+                Write-Error \"Syntax error in \$(\$_.Name): \$_\"
+                exit 1
+              }
+            }
+          "
+
+      - name: Validate Bash Syntax
+        run: |
+          echo "Validating shell scripts..."
+          find . -name "*.sh" -type f | while read -r file; do
+            if bash -n "$file" 2>/dev/null; then
+              echo "✓ $file"
+            else
+              echo "✗ Syntax error in $file"
+              exit 1
+            fi
+          done
+
+      - name: Check for unresolved comments
+        run: |
+          echo "Checking for TODO/FIXME comments..."
+          if grep -r "TODO\|FIXME" --include="*.ps1" --include="*.sh" .; then
+            echo "Warning: Found unresolved TODO/FIXME comments (not blocking)"
+          else
+            echo "✓ No unresolved comments found"
+          fi
+
+  test-windows:
+    name: Test Windows Installer
+    runs-on: windows-latest
+    needs: validate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test PowerShell Syntax
+        shell: powershell
+        run: |
+          # Validate script loads without syntax errors
+          $errors = $null
+          $null = [System.Management.Automation.PSParser]::Tokenize(
+            (Get-Content .\Install-ClaudeCode.ps1 -Raw),
+            [ref]$errors
+          )
+          if ($errors) {
+            Write-Error "Syntax errors found: $errors"
+            exit 1
+          }
+          Write-Host "✓ Install-ClaudeCode.ps1 syntax valid"
+
+          # Also check uninstaller
+          $null = [System.Management.Automation.PSParser]::Tokenize(
+            (Get-Content .\Uninstall-ClaudeCode.ps1 -Raw),
+            [ref]$errors
+          )
+          if ($errors) {
+            Write-Error "Syntax errors in uninstaller: $errors"
+            exit 1
+          }
+          Write-Host "✓ Uninstall-ClaudeCode.ps1 syntax valid"
+
+  test-linux:
+    name: Test Linux Installer
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test Bash Scripts
+        run: |
+          chmod +x install-claude-code.sh uninstall-claude-code.sh
+
+          # Validate syntax
+          bash -n install-claude-code.sh && echo "✓ install-claude-code.sh syntax valid"
+          bash -n uninstall-claude-code.sh && echo "✓ uninstall-claude-code.sh syntax valid"
+
+          # Check for common issues
+          echo "Checking for shellcheck issues..."
+          sudo apt-get install -y shellcheck
+          shellcheck install-claude-code.sh || echo "ShellCheck warnings (not blocking)"
+          shellcheck uninstall-claude-code.sh || echo "ShellCheck warnings (not blocking)"
+
+  release:
+    name: Create Release Artifacts
+    runs-on: ubuntu-latest
+    needs: [test-windows, test-linux]
+    if: github.event_name == 'release'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release
+          cp Install-ClaudeCode.ps1 release/
+          cp install-claude-code.sh release/
+          cp Uninstall-ClaudeCode.ps1 release/
+          cp uninstall-claude-code.sh release/
+
+          # Create checksums
+          cd release
+          sha256sum * > checksums.sha256
+
+          echo "Release assets prepared:"
+          ls -la
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Release Assets" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The following files are attached to this release:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ls -la release/ >> $GITHUB_STEP_SUMMARY
