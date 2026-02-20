@@ -163,7 +163,7 @@ jobs:
       - name: Build .deb Package
         run: |
           VERSION="${{ env.VERSION }}"
-          VERSION="${VERSION#v}"
+          VERSION="${VERSION#[vV]}"
           chmod +x installer/linux/deb/build-deb.sh
           ./installer/linux/deb/build-deb.sh "$VERSION"
 
@@ -193,7 +193,7 @@ jobs:
       - name: Build .rpm Package
         run: |
           VERSION="${{ env.VERSION }}"
-          VERSION="${VERSION#v}"
+          VERSION="${VERSION#[vV]}"
           chmod +x installer/linux/rpm/build-rpm.sh
           ./installer/linux/rpm/build-rpm.sh "$VERSION"
 
@@ -224,7 +224,7 @@ jobs:
           APPIMAGE_EXTRACT_AND_RUN: 1
         run: |
           VERSION="${{ env.VERSION }}"
-          VERSION="${VERSION#v}"
+          VERSION="${VERSION#[vV]}"
           chmod +x installer/linux/appimage/build-appimage.sh
           ./installer/linux/appimage/build-appimage.sh "$VERSION"
 
