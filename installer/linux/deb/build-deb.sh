@@ -6,8 +6,8 @@ set -e
 
 # Get version from argument or use date-based version
 VERSION="${1:-$(date +%Y%m%d)}"
-# Strip 'v' prefix if present (e.g., v1.0.0 -> 1.0.0)
-VERSION="${VERSION#v}"
+# Strip any leading 'v' or 'V' prefix (e.g., v1.0.0 -> 1.0.0, V1.0.0 -> 1.0.0)
+VERSION="${VERSION#[vV]}"
 PACKAGE_NAME="claude-installer"
 ARCH="all"
 
