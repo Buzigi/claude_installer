@@ -8,6 +8,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 env:
   VERSION: ${{ github.event.release.tag_name || 'dev' }}
 
