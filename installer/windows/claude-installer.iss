@@ -88,6 +88,6 @@ begin
   if CurStep = ssPostInstall then
   begin
     LogPath := ExpandConstant('{app}\installation.log');
-    SaveStringToFile(LogPath, 'Installation completed on ' + DateTimeToStr(Now) + #13#10, True);
+    SaveStringToFile(LogPath, 'Installation completed on ' + GetDateTimeString('yyyy-mm-dd hh:nn:ss', '-', ':') + #13#10, True);
   end;
 end;
