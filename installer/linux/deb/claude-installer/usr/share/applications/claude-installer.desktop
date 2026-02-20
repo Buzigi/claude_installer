@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Claude Code Installer
+GenericName=Claude Code Installer
+Comment=Install Claude Code CLI with GLM5 configuration
+Exec=claude-installer
+Icon=terminal
+Terminal=true
+Categories=Development;Utility;
+Keywords=claude;ai;installer;development;

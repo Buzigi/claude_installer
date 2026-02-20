@@ -1,0 +1,13 @@
+Package: claude-installer
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: all
+Depends: bash, curl, git
+Recommends: powershell | pwsh
+Maintainer: Claude Installer Project <https://github.com/Buzigi/claude_installer>
+Description: Claude Code CLI Installer with GLM5 configuration
+ Installs Claude Code CLI with GLM5 model configuration, skills,
+ agents, and hooks for an Agent-First workflow. Includes complete
+ setup for development environment with Zhipu AI proxy support.
+Homepage: https://github.com/Buzigi/claude_installer

@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+
+echo ""
+echo "Claude Code Installer installed successfully!"
+echo ""
+echo "To install Claude Code, run:"
+echo "  claude-installer"
+echo ""
+echo "Or directly:"
+echo "  /usr/share/claude-installer/install-claude-code.sh"
+echo ""
+
+exit 0

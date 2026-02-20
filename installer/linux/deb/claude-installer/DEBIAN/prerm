@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+
+echo "Removing Claude Code Installer..."
+
+exit 0
