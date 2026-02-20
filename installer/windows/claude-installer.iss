@@ -1,5 +1,11 @@
 ; Claude Code Installer - Inno Setup Script
 ; Builds Windows .exe installer for Claude Code with GLM5 configuration
+;
+; To build: iscc /DAppVersion="1.0.0" claude-installer.iss
+
+#ifndef AppVersion
+  #define AppVersion "1.0.0"
+#endif
 
 #define MyAppName "Claude Code Installer"
 #define MyAppPublisher "Claude Installer Project"
@@ -17,11 +23,8 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-LicenseFile=..\..\LICENSE
-InfoBeforeFile=..\..\README.md
 OutputDir=..\..\dist
 OutputBaseFilename=claude-installer-{#AppVersion}-setup
-SetupIconFile=claude-icon.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern

@@ -131,18 +131,12 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup -y
 
-      - name: Update version in ISS
+      - name: Build Windows Installer
         shell: powershell
         run: |
           $version = "${{ env.VERSION }}" -replace '^v', ''
-          $issPath = "installer\windows\claude-installer.iss"
-          $content = Get-Content $issPath -Raw
-          $content = $content -replace '#define AppVersion.*', "#define AppVersion `"$version`""
-          Set-Content $issPath $content
-
-      - name: Build Windows Installer
-        run: |
-          iscc installer\windows\claude-installer.iss
+          if ([string]::IsNullOrEmpty($version)) { $version = "1.0.0" }
+          iscc /DAppVersion="$version" installer\windows\claude-installer.iss
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
@@ -223,9 +217,11 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget curl file desktop-file-utils
+          sudo apt-get install -y wget curl file desktop-file-utils squashfs-tools
 
       - name: Build AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
         run: |
           VERSION="${{ env.VERSION }}"
           VERSION="${VERSION#v}"

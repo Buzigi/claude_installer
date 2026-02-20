@@ -195,8 +195,10 @@ if [ ! -f "$APPIMAGETOOL" ]; then
 fi
 
 # Build the AppImage
+# Use APPIMAGE_EXTRACT_AND_RUN to avoid FUSE requirement in CI environments
 mkdir -p "$DIST_DIR"
 echo "Building AppImage..."
+export APPIMAGE_EXTRACT_AND_RUN=1
 ARCH=$(uname -m) "$APPIMAGETOOL" "$APPDIR" "$DIST_DIR/$APPIMAGE_NAME"
 
 echo ""
