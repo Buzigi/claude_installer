@@ -453,7 +453,6 @@ function Initialize-ClaudeConfig {
         hooks = @{
             "PreToolUse" = @(
                 @{
-                    matcher = "*"
                     hooks = @(
                         @{
                             type = "command"
@@ -464,7 +463,6 @@ function Initialize-ClaudeConfig {
             )
             "PostToolUse" = @(
                 @{
-                    matcher = "*"
                     hooks = @(
                         @{
                             type = "command"

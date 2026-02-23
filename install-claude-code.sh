@@ -426,14 +426,22 @@ create_config() {
   "hooks": {
     "PreToolUse": [
       {
-        "type": "command",
-        "command": "bash ~/.claude/hooks/pre-tool.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/pre-tool.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
-        "type": "command",
-        "command": "bash ~/.claude/hooks/post-tool.sh"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/post-tool.sh"
+          }
+        ]
       }
     ]
   }

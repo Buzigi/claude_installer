@@ -1,105 +1,53 @@
 {
   "_comment": "Claude Code Hooks Configuration - Enforces Agent-First Workflow",
-  "_instructions": "Copy this file to ~/.claude/hooks.json and customize as needed",
-  "version": "1.0.0",
-  "enabled": true,
+  "_instructions": "This file documents the hooks format. Hooks are defined in ~/.claude/settings.json under the 'hooks' key.",
+  "_docs": "https://code.claude.com/docs/en/hooks",
+  "_format_note": "Each hook event contains an array of entries. Each entry has a 'matcher' object (use {} to match all tools, or {\"tools\": [\"ToolName\"]} to match specific tools) and a 'hooks' array of command objects.",
   "hooks": {
-    "Notification": {
-      "enabled": true,
-      "handler": "agent-orchestrator",
-      "config": {
-        "forceAgentUsage": true,
-        "minComplexityThreshold": 1,
-        "excludeSimpleTasks": false,
-        "defaultAgents": [
-          "task-manager",
-          "project-navigator",
-          "frontend-developer",
-          "backend-architect",
-          "test-writer-fixer"
-        ],
-        "agentSelection": "automatic",
-        "allowDirectExecution": false,
-        "requireApprovalForDirect": true
+    "PreToolUse": [
+      {
+        "_comment": "Delete protection - runs before destructive tool calls",
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/pre-tool.sh"
+          }
+        ]
       }
-    },
-    "PreToolUse": {
-      "enabled": true,
-      "handler": "delete-protector",
-      "config": {
-        "protectedOperations": [
-          "Write",
-          "Edit",
-          "Bash"
-        ],
-        "deletePatterns": [
-          "rm",
-          "rmdir",
-          "del",
-          "Remove-Item",
-          "Remove-Item -Recurse",
-          "git clean",
-          "git reset --hard"
-        ],
-        "protectedPaths": [
-          "~/.claude",
-          "~/projects",
-          "~/.ssh",
-          "~/.config",
-          "C:/Users/*/projects"
-        ],
-        "requireConfirmation": true,
-        "backupBeforeDelete": true,
-        "backupLocation": "~/.claude/backups"
+    ],
+    "PostToolUse": [
+      {
+        "_comment": "Operation logger - logs all tool usage",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/post-tool.sh"
+          }
+        ]
       }
-    },
-    "PostToolUse": {
-      "enabled": true,
-      "handler": "operation-logger",
-      "config": {
-        "logAllOperations": true,
-        "logFile": "~/.claude/logs/operations.log",
-        "logLevel": "info",
-        "includeTimestamp": true,
-        "includeToolResult": true
+    ],
+    "Notification": [
+      {
+        "_comment": "Agent orchestration notifications",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Agent notification received'"
+          }
+        ]
       }
-    },
-    "Stop": {
-      "enabled": true,
-      "handler": "agent-coordinator",
-      "config": {
-        "autoChainAgents": true,
-        "suggestNextAgent": true,
-        "allowAgentHandoff": true,
-        "maxAgentChainLength": 10
+    ],
+    "Stop": [
+      {
+        "_comment": "Agent coordination on stop",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Agent session completed'"
+          }
+        ]
       }
-    }
-  },
-  "permissions": {
-    "allowBypass": false,
-    "adminOverride": true,
-    "requireExplicitPermission": false
-  },
-  "agentDefaults": {
-    "task-manager": {
-      "priority": 1,
-      "useFor": ["complex", "multi-step", "coordination"]
-    },
-    "project-navigator": {
-      "priority": 2,
-      "useFor": ["exploration", "structure", "navigation"]
-    },
-    "frontend-developer": {
-      "priority": 3,
-      "useFor": ["ui", "frontend", "react", "vue"]
-    },
-    "backend-architect": {
-      "priority": 3,
-      "useFor": ["api", "backend", "database"]
-    },
-    "test-writer-fixer": {
-      "priority": 4,
-      "useFor": ["testing", "validation", "quality"]
-    }
+    ]
   }
 }
